@@ -4,7 +4,7 @@ A one-page UK venue and theatre tour planner. Browse venues, import CSVs, plan d
 
 ## Source
 
-The application is in `dist/`:
+The editable application is in `src/`:
 
 - `index.html` — page layout
 - `style.css` — neutral theme with blue controls and responsive layout
@@ -16,9 +16,26 @@ The application is in `dist/`:
 - `company-workspaces.js` — separate company workspaces and view/edit permissions
 - `cloud-config.js` — public project URL and publishable key, never a server secret
 
-## Local preview
+## Development
 
-Run `python3 -m http.server 4173 --directory dist` from this folder, then visit http://localhost:4173. No build or package installation is required. Mapping and cloud features need internet access. Email-confirmation redirects for another deployment must be configured in Supabase.
+Use Node.js 24 (`nvm use` if you use nvm), then:
+
+```sh
+npm ci
+npm run dev
+```
+
+Open http://localhost:4173 and refresh after editing `src/`. No framework or build dependency is needed for this browser application. Mapping and cloud features need internet access.
+
+```sh
+npm run check    # JavaScript syntax and local asset references
+npm run build    # Validate and generate dist/ from src/
+npm run preview  # Serve the generated site at http://localhost:4173
+```
+
+Stop the dev server before running preview on the same port, or use `npm run preview -- --port 4174`.
+
+`src/` is the source of truth; `scripts/` contains the Node build and preview tools. `dist/` and `node_modules/` are ignored generated folders. Database scripts remain in `supabase/`. Browser scripts deliberately retain their existing order and shared global scope.
 
 ## Company workspaces
 
@@ -45,7 +62,7 @@ Database access rules were tested in an isolated Postgres-compatible runtime for
 
 ## GitHub and hosting
 
-The GitHub Pages site is https://georginapeach-hub.github.io/Tour-Mapper/ . The `.github/workflows/pages.yml` workflow publishes only `dist/` when those files or the workflow change on `main`; it can also be run manually. Edit the files in `dist/` for website updates. Pages Settings uses GitHub Actions as the source.
+The GitHub Pages site is https://georginapeach-hub.github.io/Tour-Mapper/ . The `.github/workflows/pages.yml` workflow runs `npm ci` and `npm run build`, then publishes generated `dist/` when source, build scripts or npm configuration change on `main`; it can also be run manually. Edit `src/` for website updates and commit the source, never generated `dist/`. Pages Settings uses GitHub Actions as the source.
 
 Supabase continues to supply the existing database, sign-in and workspace permissions. Allow `https://georginapeach-hub.github.io/Tour-Mapper/` in Supabase Auth redirect URLs for email confirmation links from this deployment. Browser storage and login sessions are separate for each site address: save any local changes to cloud on the old site, then sign in on the new site.
 

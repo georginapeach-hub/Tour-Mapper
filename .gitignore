@@ -3,12 +3,6 @@
 .env.*
 !.env.example
 node_modules/
+dist/
 .openai/local/
 supabase/.temp/
-# Historical convenience copies; dist/ is the authoritative application.
-/app.js
-/cloud.js
-/exports.js
-/index.html
-/style.css
-/tour-suggestions.js

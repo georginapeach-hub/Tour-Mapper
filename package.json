@@ -1,0 +1,16 @@
+{
+  "name": "tour-mapper",
+  "version": "1.0.0",
+  "private": true,
+  "description": "UK venue and theatre tour planner",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "node scripts/serve.mjs src",
+    "check": "node scripts/check.mjs",
+    "build": "npm run check && node scripts/build.mjs",
+    "preview": "node scripts/serve.mjs dist",
+    "start": "npm run dev"
+  }
+}
