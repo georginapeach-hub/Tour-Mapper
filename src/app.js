@@ -60,7 +60,7 @@ function fresh() {
       {
         id: "theatre",
         name: "All Theatres",
-        color: "#75956c",
+        color: "#e8a16d",
         on: true,
         rule: "theatre",
       },
@@ -372,6 +372,11 @@ function venueVisible(v) {
   );
 }
 
+function categoryMarkerColour(category) {
+  // Restore the orange default for libraries saved with the former green theme.
+  return category?.rule === "theatre" && category.color === "#75956c"
+    ? "#e8a16d" : category?.color || "#e8a16d";
+}
 function pin(color, n) {
   return L.divIcon({
     className: "pin-icon",
@@ -431,8 +436,8 @@ function renderVenues() {
       L.marker([v.lat, v.lng], {
         icon: pin(
           typeof venueMarkerColour === "function"
-            ? venueMarkerColour(v, v.importSource ? "#e8a16d" : c?.color || "#75956c")
-            : v.status === "permanently_closed" ? "#92969b" : v.importSource ? "#e8a16d" : c?.color || "#75956c",
+            ? venueMarkerColour(v, v.importSource ? "#e8a16d" : categoryMarkerColour(c))
+            : v.status === "permanently_closed" ? "#92969b" : v.importSource ? "#e8a16d" : categoryMarkerColour(c),
         ),
       })
         .bindPopup(() => popup(v), {
@@ -451,7 +456,7 @@ function renderLayers() {
   $("#layerList").innerHTML = state.categories
     .map(
       (c) =>
-        `<label class="layer"><span class="dot" style="--dot:${esc(c.color)}"></span><span>${esc(c.name)} <small>${state.venues.filter((v) => belongs(v, c)).length}</small></span><input aria-label="Show ${esc(c.name)}" type="checkbox" data-cat="${esc(c.id)}" ${c.on ? "checked" : ""}></label>`,
+        `<label class="layer"><span class="dot" style="--dot:${esc(categoryMarkerColour(c))}"></span><span>${esc(c.name)} <small>${state.venues.filter((v) => belongs(v, c)).length}</small></span><input aria-label="Show ${esc(c.name)}" type="checkbox" data-cat="${esc(c.id)}" ${c.on ? "checked" : ""}></label>`,
     )
     .join("");
   if (typeof renderSuggestionLayer === "function") renderSuggestionLayer();
@@ -914,7 +919,7 @@ function editVenue(id) {
         .filter((c) => !c.rule)
         .map(
           (c) =>
-            `<label class="layer"><span class="dot" style="--dot:${esc(c.color)}"></span><span>${esc(c.name)}</span><input type="checkbox" data-vcat="${esc(c.id)}" ${(v.categories || []).includes(c.id) ? "checked" : ""}></label>`,
+            `<label class="layer"><span class="dot" style="--dot:${esc(categoryMarkerColour(c))}"></span><span>${esc(c.name)}</span><input type="checkbox" data-vcat="${esc(c.id)}" ${(v.categories || []).includes(c.id) ? "checked" : ""}></label>`,
         )
         .join("") ||
       "<p>Create a category in Map layers to organise other venues.</p>"
