@@ -26,7 +26,7 @@ Turnpike Productions and Wicked Pig are separate saved workspaces. Their venue l
 
 Use the **Workspace** menu to switch jobs, **Save to cloud** to save shared edits, and **People & sharing** to add a verified sign-in email as **View only** or **Can edit**. The owner manages access. The form does not send invitation emails; send the workspace link yourself.
 
-The existing hosted site is private at the hosting layer too. A person needs both hosted-site access and the selected company's permission. Adding them to a company alone does not bypass the hosting sign-in screen. Give hosting access through Sites sharing controls or ask Codex to configure it for named people. Do not make the site public just to work around this step.
+The GitHub Pages interface is public, while saved company data requires Supabase sign-in and workspace membership. The original Sites deployment additionally requires hosted-site access. Company permissions apply on both deployments.
 
 Company URLs use `?workspace=<company UUID>`. A URL is a locator, not an access token: Supabase checks authenticated membership for every read/write. A viewer can browse and export but cannot save changes. An editor can edit and save only their permitted workspaces. Company caches are separated by workspace and account, and access is verified before displaying a cache. Sign-out clears a company's in-memory view.
 
@@ -45,7 +45,11 @@ Database access rules were tested in an isolated Postgres-compatible runtime for
 
 ## GitHub and hosting
 
-GitHub stores and versions this code. Supabase supplies the database and sign-in. GitHub Pages alone does not provide a database backend. The existing deployment remains at https://tour-atlas-uk.vocalrhino16.chatgpt.site/ and is published through Sites; pushing this GitHub repository does not automatically redeploy it. Sites-specific repository identity and publishing credentials are not included here.
+The GitHub Pages site is https://georginapeach-hub.github.io/Tour-Mapper/ . The `.github/workflows/pages.yml` workflow publishes only `dist/` when those files or the workflow change on `main`; it can also be run manually. Edit the files in `dist/` for website updates. Pages Settings uses GitHub Actions as the source.
+
+Supabase continues to supply the existing database, sign-in and workspace permissions. Allow `https://georginapeach-hub.github.io/Tour-Mapper/` in Supabase Auth redirect URLs for email confirmation links from this deployment. Browser storage and login sessions are separate for each site address: save any local changes to cloud on the old site, then sign in on the new site.
+
+The original deployment remains at https://tour-atlas-uk.vocalrhino16.chatgpt.site/ and is published separately through Sites; GitHub pushes do not redeploy that address. Sites-specific repository identity and publishing credentials are not included here.
 
 ## Mapping services
 
