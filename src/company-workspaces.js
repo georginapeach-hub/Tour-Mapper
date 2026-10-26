@@ -26,6 +26,9 @@ function renderCompanySelector() {
   if (companyContext.id && !companyList.some(c=>c.id===companyContext.id))
     select.insertAdjacentHTML("beforeend",`<option value="${esc(companyContext.id)}">Workspace: sign in required</option>`);
   select.value=companyContext.id || "";
+  const workspaceMenuName = $('#workspaceMenuName');
+  if (workspaceMenuName) workspaceMenuName.textContent = companyContext.id
+    ? `Workspace: ${companyContext.name || 'Company workspace'}` : 'Choose Workspace';
   $("#workspaceRole").textContent = companyContext.id
     ? companyContext.ready ? `${companyContext.name} · ${roleNames[companyContext.role]}` : "Sign in to verify access to this workspace."
     : cloudUser ? "Personal workspace · only you" : "Sign in to open your company workspaces.";

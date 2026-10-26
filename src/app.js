@@ -165,12 +165,16 @@ function setDirty() {
   dirty = true;
   save();
 }
+let selectedTourId = null;
 function renderTour() {
   const t = tour();
-  $("#tourSelect").innerHTML = state.tours
+  $("#tourSelect").innerHTML = '<option value="" disabled>Select Tour</option>' + state.tours
     .map((x) => `<option value="${esc(x.id)}">${esc(x.name)}</option>`)
     .join("");
-  $("#tourSelect").value = t.id;
+  const isEmptyStarter = state.tours.length === 1 &&
+    ['My first company tour', 'My first tour'].includes(t.name) &&
+    !t.stops.some(s => s.date || s.venueId || s.text);
+  $("#tourSelect").value = isEmptyStarter && selectedTourId !== t.id ? '' : t.id;
   $("#stops").innerHTML = t.stops
     .map((s, i) => {
       const v = state.venues.find((v) => v.id === s.venueId);
@@ -661,6 +665,7 @@ async function updateTourMap() {
 }
 $("#tourSelect").onchange = () => {
   state.current = $("#tourSelect").value;
+  selectedTourId = state.current;
   dirty = false;
   save();
   renderTour();

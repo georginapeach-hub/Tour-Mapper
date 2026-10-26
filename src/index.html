@@ -44,10 +44,8 @@
         <span id="saveState">● Saved on this browser</span
         ><button class="outline" id="exportBtn">↓ Export</button
         ><button class="primary" id="importBtn">↑ Import venues</button>
-      </div>
-    </header>
-    <main>
-      <aside>
+        <details class="workspace-menu" id="workspaceMenu">
+          <summary><span id="workspaceMenuName">Choose Workspace</span><span class="workspace-chevron" aria-hidden="true">⌄</span></summary>
         <section class="workspace-section">
           <label class="field-label workspace-label" for="workspaceSelect">Workspace</label>
           <select id="workspaceSelect" aria-label="Company workspace"><option value="">Choose Workspace</option></select>
@@ -55,12 +53,17 @@
           <p id="workspaceRole" class="micro">Sign in to open your company workspaces.</p>
           <div class="workspace-actions"><button class="outline" id="workspaceAccount">Account</button><button class="primary" id="saveWorkspace">Save to cloud</button></div>
         </section>
-        <section class="tour-section">
+        </details>
+      </div>
+    </header>
+    <main>
+      <aside>
+        <section class="tour-section tour-profile-section">
           <div class="section-heading">
-            <h2>Your tour</h2>
+            <h2>Tour</h2>
             <button class="text-btn" id="newTour">＋ New tour</button>
           </div>
-          <label class="field-label" for="tourSelect">COMPANY / TOUR</label>
+          <label class="workspace-label" for="tourSelect">Select Tour</label>
           <div class="select-line">
             <select id="tourSelect"></select
             ><button class="icon-btn" id="renameTour" title="Rename tour">
@@ -69,7 +72,10 @@
               ×
             </button>
           </div>
-          <button class="outline suggestion-import" id="importSuggestions">↑ Import suggestions for this tour</button>
+        </section>
+        <section class="schedule-section">
+          <div class="section-heading"><h2>Schedule</h2></div>
+          <button class="outline suggestion-import" id="importSuggestions">↑ Import suggested Hit List</button>
           <div id="suggestionSummary" class="micro"></div>
           <div class="tour-heading"><span>DATE</span><span>VENUE</span></div>
           <div id="stops"></div>
