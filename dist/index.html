@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Tour Mapper — UK venue & tour planner</title>
+    <meta
+      name="description"
+      content="A working map for taking theatre on the road. Organise venues, plan company tours and explore UK road journeys."
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <link rel="stylesheet" href="style.css?v=15" />
+    <script
+      defer
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    ></script>
+    <script defer src="app.js?v=15"></script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.95.3/dist/umd/supabase.js"
+    ></script>
+    <script defer src="cloud-config.js?v=15"></script>
+    <script defer src="cloud.js?v=15"></script>
+    <script defer src="venue-information.js?v=15"></script>
+    <script defer src="tour-suggestions.js?v=15"></script>
+    <script defer src="exports.js?v=15"></script>
+    <script defer src="company-workspaces.js?v=15"></script>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="#" aria-label="Tour Mapper home"
+        ><span>Tour <span class="serif">Mapper</span></span></a
+      >
+      <nav>
+        <button class="nav active" id="planTab">Tour planner</button
+        ><button class="nav" id="libraryBtn">
+          Venue library <span id="libraryCount">0</span>
+        </button>
+      </nav>
+      <div class="header-right">
+        <span id="saveState">● Saved on this browser</span
+        ><button class="outline" id="exportBtn">↓ Export</button
+        ><button class="primary" id="importBtn">↑ Import venues</button>
+      </div>
+    </header>
+    <main>
+      <aside>
+        <section class="workspace-section">
+          <label class="field-label" for="workspaceSelect">WORKSPACE</label>
+          <select id="workspaceSelect" aria-label="Company workspace"><option value="">My personal workspace</option></select>
+          <div class="workspace-actions"><button class="text-btn" id="shareWorkspace">People &amp; sharing</button><button class="text-btn" id="newWorkspace">＋ Workspace</button></div>
+          <p id="workspaceRole" class="micro">Sign in to open your company workspaces.</p>
+          <div class="workspace-actions"><button class="outline" id="workspaceAccount">Account</button><button class="primary" id="saveWorkspace">Save to cloud</button></div>
+        </section>
+        <section class="tour-section">
+          <div class="section-heading">
+            <h2>Your tour</h2>
+            <button class="text-btn" id="newTour">＋ New tour</button>
+          </div>
+          <label class="field-label" for="tourSelect">COMPANY / TOUR</label>
+          <div class="select-line">
+            <select id="tourSelect"></select
+            ><button class="icon-btn" id="renameTour" title="Rename tour">
+              ✎</button
+            ><button class="icon-btn" id="deleteTour" title="Delete tour">
+              ×
+            </button>
+          </div>
+          <button class="outline suggestion-import" id="importSuggestions">↑ Import suggestions for this tour</button>
+          <div id="suggestionSummary" class="micro"></div>
+          <div class="tour-heading"><span>DATE</span><span>VENUE</span></div>
+          <div id="stops"></div>
+          <button class="add-stop" id="addStop">
+            ＋ <span>Add a tour date</span>
+          </button>
+          <button class="update" id="updateTour">
+            Update Tour <span>↗</span>
+          </button>
+          <div class="tour-stats">
+            <div>
+              <strong id="stopCount">0</strong><small>TOUR STOPS</small>
+            </div>
+            <div><strong id="distance">—</strong><small>ROAD MILES</small></div>
+            <div><strong id="duration">—</strong><small>DRIVE TIME</small></div>
+          </div>
+        </section>
+        <section class="layers">
+          <div class="section-heading">
+            <h2>Map layers</h2>
+            <button class="text-btn" id="categoryBtn">＋ Category</button>
+          </div>
+          <p class="capacity-hint">
+            Filter by the size of any space at a venue.
+          </p>
+          <div id="layerList"></div>
+          <div class="layer-divider"></div>
+          <label class="layer"
+            ><span class="dot blue"></span><span>Current tour</span
+            ><input type="checkbox" id="tourLayer" checked /></label
+          ><label class="layer"
+            ><span class="time-icon">◷</span><span>Driving times</span
+            ><input type="checkbox" id="timesLayer"
+          /></label>
+          <p class="micro">Road estimates exclude traffic, stops and breaks.</p>
+        </section>
+        <footer class="aside-footer">
+          <span class="local-dot"></span
+          ><span id="storageLabel">Your workspace · saved on this browser</span
+          ><button class="text-btn" id="settingsBtn">Settings</button>
+        </footer>
+      </aside>
+      <div class="map-panel">
+        <div id="map"></div>
+        <div class="map-top">
+          <div class="map-title">
+            <span class="live-dot"></span> UNITED KINGDOM
+            <span class="map-separator">/</span>
+            <span id="mapVenueCount">0 venues</span>
+          </div>
+          <button class="map-button" id="fitMap">⌖ Fit map</button>
+        </div>
+        <div class="map-search">
+          <span>⌕</span
+          ><input
+            id="mapSearch"
+            placeholder="Find a venue in your library…"
+            aria-label="Find venue"
+          />
+          <div id="mapResults"></div>
+        </div>
+        <div class="map-note" id="mapNote">
+          <strong>A stage in every corner.</strong
+          ><span
+            >Example venues to get you started. Import your CSV to make it
+            yours.</span
+          ><button id="dismissNote" aria-label="Dismiss note">×</button>
+        </div>
+        <div class="map-bottom">
+          <span
+            ><i class="legend-pin"></i> TOUR STOP
+            <i class="legend-line"></i> DRIVING ROUTE</span
+          ><button class="map-button" id="helpBtn">? Import guide</button>
+        </div>
+      </div>
+    </main>
+    <div id="toast" role="status"></div>
+    <dialog id="modal">
+      <div class="modal-head">
+        <h2 id="modalTitle"></h2>
+        <button id="closeModal" aria-label="Close">×</button>
+      </div>
+      <div id="modalBody"></div>
+    </dialog>
+  </body>
+</html>
