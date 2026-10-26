@@ -35,6 +35,7 @@ function renderCompanySelector() {
   $("#shareWorkspace").disabled = !!companyContext.id && companyContext.role !== "owner";
   $("#saveWorkspace").disabled = !cloudUser || !workspaceCanEdit();
   $("#newWorkspace").disabled = false;
+  $('#copyWorkspaceLink').disabled = !companyContext.id || !companyContext.ready;
   if (companyContext.id) document.title = `${companyContext.name || "Company workspace"} · Tour Mapper`;
   applyCompanyReadOnly();
 }
@@ -203,3 +204,19 @@ async function showCompanySharing() {
   }
 }
 renderCompanySelector();
+
+$('#copyWorkspaceLink').onclick = async () => {
+  if (!companyContext.id || !companyContext.ready) return toast('Choose a company workspace first.');
+  // Share the published address, rather than a localhost-only preview link.
+  const url = new URL(['localhost', '127.0.0.1'].includes(location.hostname)
+    ? 'https://georginapeach-hub.github.io/Tour-Mapper/' : companyWorkspaceLink(companyContext.id));
+  url.search = ''; url.hash = '';
+  url.searchParams.set('workspace', companyContext.id);
+  try {
+    await navigator.clipboard.writeText(url.href);
+    toast('Workspace link copied. Recipients must have workspace access.');
+  } catch {
+    modal('Share workspace link', `<p>Copy this link and send it to someone added under People &amp; sharing. Save to cloud before sharing recent edits.</p><label class="form-label" for="copyWorkspaceUrl">Workspace link</label><input id="copyWorkspaceUrl" readonly value="${esc(url.href)}">`);
+    $('#copyWorkspaceUrl').select();
+  }
+};

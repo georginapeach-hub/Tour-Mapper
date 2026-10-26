@@ -1629,3 +1629,53 @@ header{z-index:900}
 @media(min-width:721px) and (max-width:1250px){header{gap:20px;padding:0 20px}.header-right>span{display:none}.workspace-menu>summary{max-width:220px}nav{gap:16px}.brand{font-size:26px}}
 @media(max-width:720px){header{height:auto;min-height:110px;flex-wrap:wrap;gap:10px;padding:14px 12px}.header-right{flex:1;flex-wrap:wrap;justify-content:flex-end;gap:8px}.header-right .workspace-menu{flex-basis:100%;display:flex;justify-content:flex-end}.workspace-menu>summary{min-height:40px;padding:9px 13px;font-size:12px;max-width:calc(100vw - 24px)}.workspace-menu>.workspace-section{top:calc(100% + 8px);padding:22px}.workspace-menu .outline{display:inline-block}.tour-profile-section{margin-top:0}}
 header{z-index:2000;isolation:isolate}.workspace-menu{z-index:2100}.workspace-menu>.workspace-section{z-index:2200}
+.tour-profile-section #newTour{min-height:44px;padding:10px 14px;background:#fffaf5;border:1.5px solid #db8066;border-radius:12px;color:#a83d33;font-size:15px;font-weight:650;white-space:nowrap}
+.tour-profile-section #newTour:hover{background:#fff0e5}
+/* Keep save status available to scripts without displaying it in the header. */
+.header-right > #saveState{display:none}
+/* Match the Schedule card to Tour and improve itinerary readability. */
+.schedule-section{background:linear-gradient(125deg,#fbe0e6,#fbd8c5 72%,#ffe6c9);border:1px solid #f3cfc1;border-radius:20px;padding:24px 25px;margin:0 12px 12px}
+.schedule-section h2{font-size:23px}
+.schedule-section .suggestion-import{font-size:14px;min-height:46px;padding:12px}
+.schedule-section .micro{font-size:13px;line-height:1.6}
+.schedule-section .tour-heading{font-size:12px;letter-spacing:1px}
+.schedule-section #stops input{font-size:15px;min-height:46px}
+.schedule-section #stops .remove-stop{font-size:21px;min-height:44px}
+.schedule-section #addStop{font-size:15px;min-height:48px}
+.schedule-section .suggestions button{font-size:14px}.schedule-section .suggestions small{font-size:12px}
+.schedule-section .tour-stats strong{font-size:25px}.schedule-section .tour-stats small{font-size:11px;letter-spacing:.6px}
+@media(max-width:720px){.schedule-section{margin:12px;border-radius:20px;padding:24px}.schedule-section #stops input{font-size:16px}}
+/* Shared readable type scale for actions and button-like selectors. */
+:root{--action-font-size:15px}
+body button,body .workspace-menu>summary,body .workspace-section #workspaceSelect,body .tour-profile-section #tourSelect,body .map-style-control select{font-size:var(--action-font-size)!important;font-weight:600;line-height:1.35}
+body button{min-height:40px}
+body .text-btn{padding:8px 4px}
+body .icon-btn,body .remove-stop{min-width:32px;min-height:40px;display:inline-flex;align-items:center;justify-content:center}
+body .map-button{padding:10px 13px}
+body .nav{padding:8px 0}
+body .workspace-menu>summary{padding:11px 14px}
+body .workspace-actions{flex-wrap:wrap}
+body .section-heading{gap:10px}
+body .tour-profile-section .section-heading{flex-wrap:wrap}
+body .suggestions button{height:auto;min-height:44px;text-align:left}
+body .suggestions button small{font-size:12px;line-height:1.4}
+@media(max-width:720px){header .header-right{gap:8px}.header-right .primary,.header-right .outline{padding:10px 12px}.workspace-menu>summary{max-width:calc(100vw - 24px)}.schedule-section .suggestion-import{white-space:normal}.workspace-actions button{flex-shrink:0}}
+/* Keep map filters consistent with the workspace and schedule cards. */
+aside > .layers{background:linear-gradient(125deg,#fbe0e6,#fbd8c5 72%,#ffe6c9);border:1px solid #f3cfc1;border-radius:20px;padding:24px 25px;margin:0 12px 12px}
+aside > .layers h2{font-size:23px}
+aside > .layers .section-heading{flex-wrap:wrap;gap:10px}
+aside > .layers .capacity-hint,aside > .layers .micro{font-size:13px!important;line-height:1.6}
+aside > .layers .layer{font-size:15px;line-height:1.4;min-height:44px;gap:10px}
+aside > .layers .layer small{font-size:13px}
+aside > .layers .layer input[type=checkbox]{flex-shrink:0}
+aside > .layers .layer-divider{background:#edc7b9;border-color:#edc7b9;margin:15px 0}
+@media(max-width:720px){aside > .layers{margin:0 12px 12px;padding:24px}}
+
+/* Use the same text-action treatment as the Map layers Category button. */
+body .tour-profile-section #newTour,body .schedule-section #addStop{display:inline-flex;align-items:center;justify-content:center;width:auto;min-width:0;min-height:40px;height:auto;padding:8px 4px;margin:0;border:0;border-radius:0;background:none;box-shadow:none;color:#c34448;font-size:var(--action-font-size)!important;font-weight:600;line-height:1.35;gap:4px}
+body .tour-profile-section #newTour:hover,body .schedule-section #addStop:hover{background:none}
+body .schedule-section #addStop{display:flex;margin-left:auto}
+body .schedule-section #addStop span{font:inherit;vertical-align:baseline;margin-left:0}
+
+.workspace-menu .workspace-copy-link{display:block;width:100%;margin-top:12px;min-height:44px}
+.workspace-menu .workspace-link-hint{margin:8px 0 12px;line-height:1.5}

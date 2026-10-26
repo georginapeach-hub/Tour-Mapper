@@ -50,6 +50,8 @@
           <label class="field-label workspace-label" for="workspaceSelect">Workspace</label>
           <select id="workspaceSelect" aria-label="Company workspace"><option value="">Choose Workspace</option></select>
           <button class="outline add-workspace" id="newWorkspace">＋ Add Workspace</button><div class="workspace-actions"><button class="text-btn" id="shareWorkspace">People &amp; sharing</button></div>
+          <button class="outline workspace-copy-link" id="copyWorkspaceLink">Copy workspace link</button>
+          <p class="micro workspace-link-hint">Share this link with people added under People &amp; sharing. Save to cloud to share your latest changes.</p>
           <p id="workspaceRole" class="micro">Sign in to open your company workspaces.</p>
           <div class="workspace-actions"><button class="outline" id="workspaceAccount">Account</button><button class="primary" id="saveWorkspace">Save to cloud</button></div>
         </section>
@@ -80,7 +82,7 @@
           <div class="tour-heading"><span>DATE</span><span>VENUE</span></div>
           <div id="stops"></div>
           <button class="add-stop" id="addStop">
-            ＋ <span>Add a tour date</span>
+            ＋ <span>New tour date</span>
           </button>
           <div class="tour-stats">
             <div>

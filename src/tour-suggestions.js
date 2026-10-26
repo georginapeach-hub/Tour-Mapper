@@ -37,7 +37,7 @@ function validateTourSuggestions(t, ids) {
 function renderSuggestionSummary() {
   const t = tour(), list = t.suggestions || [];
   $("#suggestionSummary").innerHTML = list.length
-    ? `<strong>${list.length} suggested venues</strong><div class="status-legend">${Object.entries(TOUR_STATUSES).map(([key, spec]) => `<span><i style="background:${tourStatusColour(key,t)}"></i>${spec.label} ${list.filter(s => s.status === key).length}</span>`).join("")}</div>` : "Import a shortlist for this tour, separate from its dated itinerary.";
+    ? `<strong>${list.length} suggested venues</strong><div class="status-legend">${Object.entries(TOUR_STATUSES).map(([key, spec]) => `<span><i style="background:${tourStatusColour(key,t)}"></i>${spec.label} ${list.filter(s => s.status === key).length}</span>`).join("")}</div>` : "Import a targeted hit list for this tour, separate from its dated itinerary.";
 }
 function renderSuggestionLayer() {
   const t = tour();
