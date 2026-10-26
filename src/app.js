@@ -1728,11 +1728,35 @@ function init() {
   }
   map = L.map("map", { zoomControl: false }).setView([54.5, -3.4], 6);
   L.control.zoom({ position: "topright" }).addTo(map);
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    maxZoom: 19,
-  }).addTo(map);
+  const osmCredit = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+  const stadiaCredit = '&copy; <a href="https://stadiamaps.com/attribution/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> ' + osmCredit;
+  const stamenCredit = '&copy; <a href="https://stamen.com/">Stamen Design</a> ' + stadiaCredit;
+  // Stadia styles work on localhost; publishing requires domain authentication.
+  const styles = {
+    watercolor: { url: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg', credit: stamenCredit, max: 16 },
+    streets: { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', credit: osmCredit, max: 19 },
+    light: { url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}.png', credit: stadiaCredit, max: 20 },
+    dark: { url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}.png', credit: stadiaCredit, max: 20 },
+    toner: { url: 'https://tiles.stadiamaps.com/tiles/stamen_toner/{z}/{x}/{y}.png', credit: stamenCredit, max: 20 },
+  };
+  let basemap = null;
+  const styleSelect = $('#mapStyle');
+  function changeMapStyle(id) {
+    const style = styles[id] || styles.watercolor;
+    const next = L.tileLayer(style.url, { attribution: style.credit, maxNativeZoom: style.max, maxZoom: 20 });
+    if (basemap) map.removeLayer(basemap);
+    basemap = next.addTo(map);
+    basemap.bringToBack();
+    try { localStorage.setItem('tour-mapper-map-style', id); } catch {}
+  }
+  let initialStyle = 'watercolor';
+  try {
+    const saved = localStorage.getItem('tour-mapper-map-style');
+    if (Object.hasOwn(styles, saved)) initialStyle = saved;
+  } catch {}
+  styleSelect.value = initialStyle;
+  changeMapStyle(initialStyle);
+  styleSelect.addEventListener('change', () => changeMapStyle(styleSelect.value));
   venueMarkers = L.layerGroup().addTo(map);
   routeLines = L.layerGroup().addTo(map);
   timeLabels = L.layerGroup().addTo(map);

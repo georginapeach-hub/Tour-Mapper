@@ -120,7 +120,18 @@
             <span class="map-separator">/</span>
             <span id="mapVenueCount">0 venues</span>
           </div>
-          <button class="map-button" id="fitMap">⌖ Fit map</button>
+          <div class="map-controls">
+            <label class="map-style-control" for="mapStyle">Map style
+              <select id="mapStyle">
+                <option value="watercolor">Watercolour</option>
+                <option value="streets">Standard streets</option>
+                <option value="light">Light &amp; minimal</option>
+                <option value="dark">Dark</option>
+                <option value="toner">Black &amp; white</option>
+              </select>
+            </label>
+            <button class="map-button" id="fitMap">⌖ Fit map</button>
+          </div>
         </div>
         <div class="map-search">
           <span>⌕</span

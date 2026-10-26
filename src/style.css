@@ -1556,3 +1556,8 @@ dialog.library-modal {
 .company-person span{grid-column:1/-1;overflow-wrap:anywhere}.company-person button{font-size:12px}
 #shareRole{width:100%;padding:10px;margin-bottom:8px}
 #companyShareLink{width:100%;font-size:12px}
+
+.map-controls{display:flex;align-items:center;gap:8px}
+.map-style-control{display:flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid #e5b9c9;border-radius:5px;background:#fff8fc;color:var(--ink);font-size:11px;box-shadow:0 2px 10px #20392f08}
+.map-style-control select{max-width:145px;padding:4px;border:1px solid #e5b9c9;border-radius:3px;background:#fff;color:var(--ink);font:inherit;cursor:pointer}
+@media(max-width:720px){.map-top .map-title{display:none}.map-controls{width:100%;justify-content:space-between}.map-style-control{gap:5px;font-size:10px}.map-style-control select{max-width:125px}}
