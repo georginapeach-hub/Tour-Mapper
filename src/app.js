@@ -755,7 +755,6 @@ $("#timesLayer").onchange = () => {
   drawTour();
 };
 $("#fitMap").onclick = fit;
-$("#dismissNote").onclick = () => ($("#mapNote").style.display = "none");
 $("#mapSearch").oninput = () => {
   const q = $("#mapSearch").value.toLowerCase().trim();
   $("#mapResults").innerHTML = q
@@ -1486,7 +1485,6 @@ function reviewImport(rows, cols, defaultType, extra) {
     renderTour();
     close();
     fit();
-    $("#mapNote").style.display = "none";
     toast(
       `${accepted.length} venues imported. ${accepted.filter((v) => !hasLocation(v)).length} still need a location in your library.`,
     );
@@ -1763,8 +1761,6 @@ function init() {
   tourMarkers = L.layerGroup().addTo(map);
   renderVenues();
   drawTour();
-  if (!state.venues.some((v) => v.example))
-    $("#mapNote").style.display = "none";
   save();
 }
 init();

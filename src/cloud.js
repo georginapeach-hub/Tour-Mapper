@@ -310,8 +310,6 @@ function renderLoadedWorkspace() {
   $("#tourLayer").checked = state.tourOn;
   $("#timesLayer").checked = state.times;
   if (map) fit();
-  if (!state.venues.some((v) => v.example))
-    $("#mapNote").style.display = "none";
 }
 function handleAutoLoadError() {
   $("#saveState").textContent = "● Using venues saved on this browser";
