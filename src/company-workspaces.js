@@ -22,16 +22,16 @@ function copyCompanyLibrary(source,name) {
 }
 function renderCompanySelector() {
   const select=$("#workspaceSelect");
-  select.innerHTML = `<option value="">My personal workspace</option>${companyList.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("")}`;
+  select.innerHTML = `<option value="">Choose Workspace</option>${companyList.map(c=>`<option value="${esc(c.id)}">Workspace: ${esc(c.name)}</option>`).join("")}`;
   if (companyContext.id && !companyList.some(c=>c.id===companyContext.id))
-    select.insertAdjacentHTML("beforeend",`<option value="${esc(companyContext.id)}">Company workspace · sign in required</option>`);
+    select.insertAdjacentHTML("beforeend",`<option value="${esc(companyContext.id)}">Workspace: sign in required</option>`);
   select.value=companyContext.id || "";
   $("#workspaceRole").textContent = companyContext.id
     ? companyContext.ready ? `${companyContext.name} · ${roleNames[companyContext.role]}` : "Sign in to verify access to this workspace."
     : cloudUser ? "Personal workspace · only you" : "Sign in to open your company workspaces.";
   $("#shareWorkspace").disabled = !!companyContext.id && companyContext.role !== "owner";
   $("#saveWorkspace").disabled = !cloudUser || !workspaceCanEdit();
-  $("#newWorkspace").disabled = !cloudUser;
+  $("#newWorkspace").disabled = false;
   if (companyContext.id) document.title = `${companyContext.name || "Company workspace"} · Tour Mapper`;
   applyCompanyReadOnly();
 }
@@ -116,7 +116,7 @@ autoLoadCloud=async function(session) {
 function applyCompanyReadOnly() {
   const locked=!!companyContext.id && !workspaceCanEdit();
   document.body.classList.toggle("workspace-read-only",locked);
-  const selector=['#newTour','#renameTour','#deleteTour','#addStop','#updateTour','#importBtn','#importSuggestions','#categoryBtn','#saveVenue','#removeVenue','#addVenue','#clearExamples','#locatePostcodes','#confirmSuggestions','#confirmRestore','#uploadCloud','.remove-stop','.popup-edit','.popup-btn','#stops input','.suggestion-status','.suggestion-colour','.venue-row-edit'].join(',');
+  const selector=['#newTour','#renameTour','#deleteTour','#addStop','#importBtn','#importSuggestions','#categoryBtn','#saveVenue','#removeVenue','#addVenue','#clearExamples','#locatePostcodes','#confirmSuggestions','#confirmRestore','#uploadCloud','.remove-stop','.popup-edit','.popup-btn','#stops input','.suggestion-status','.suggestion-colour','.venue-row-edit'].join(',');
   for (const el of document.querySelectorAll(selector)) {
     if (locked && !el.disabled) {el.disabled=true;el.dataset.companyLocked="1";}
     else if (!locked && el.dataset.companyLocked) {el.disabled=false;delete el.dataset.companyLocked;}

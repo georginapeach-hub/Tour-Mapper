@@ -49,9 +49,9 @@
     <main>
       <aside>
         <section class="workspace-section">
-          <label class="field-label" for="workspaceSelect">WORKSPACE</label>
-          <select id="workspaceSelect" aria-label="Company workspace"><option value="">My personal workspace</option></select>
-          <div class="workspace-actions"><button class="text-btn" id="shareWorkspace">People &amp; sharing</button><button class="text-btn" id="newWorkspace">＋ Workspace</button></div>
+          <label class="field-label workspace-label" for="workspaceSelect">Workspace</label>
+          <select id="workspaceSelect" aria-label="Company workspace"><option value="">Choose Workspace</option></select>
+          <button class="outline add-workspace" id="newWorkspace">＋ Add Workspace</button><div class="workspace-actions"><button class="text-btn" id="shareWorkspace">People &amp; sharing</button></div>
           <p id="workspaceRole" class="micro">Sign in to open your company workspaces.</p>
           <div class="workspace-actions"><button class="outline" id="workspaceAccount">Account</button><button class="primary" id="saveWorkspace">Save to cloud</button></div>
         </section>
@@ -75,9 +75,6 @@
           <div id="stops"></div>
           <button class="add-stop" id="addStop">
             ＋ <span>Add a tour date</span>
-          </button>
-          <button class="update" id="updateTour">
-            Update Tour <span>↗</span>
           </button>
           <div class="tour-stats">
             <div>

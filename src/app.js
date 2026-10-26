@@ -164,8 +164,6 @@ function sortStops() {
 function setDirty() {
   dirty = true;
   save();
-  $("#updateTour").innerHTML = "Update Tour <span>↗</span>";
-  $("#updateTour").title = "Apply your changes to the map";
 }
 function renderTour() {
   const t = tour();
@@ -194,6 +192,17 @@ function renderTour() {
           (digits.length > 4 ? "/" + digits.slice(4) : "");
         s.date = di.value;
         setDirty();
+      };
+      di.onkeydown = (event) => {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        if (dateKey(s.date) === null) {
+          di.classList.add('invalid');
+          toast('Enter a valid date in dd/mm/yy format.');
+          return;
+        }
+        if (!s.venueId) { vi.focus(); return; }
+        updateTourMap().catch(() => toast('The route could not update. Please try again.'));
       };
       di.onblur = () => {
         di.classList.toggle("invalid", !!s.date && dateKey(s.date) === null);
@@ -257,6 +266,7 @@ function renderTour() {
             list.innerHTML = "";
             vi.setAttribute("aria-expanded", "false");
             setDirty();
+            if (dateKey(s.date) !== null) updateTourMap().catch(() => toast('The route could not update. Please try again.'));
           };
         });
       }
@@ -307,7 +317,7 @@ function renderTour() {
         if (!t.stops.length)
           t.stops = [{ id: uid(), date: "", venueId: "", text: "" }];
         setDirty();
-        renderTour();
+        updateTourMap().catch(() => toast('The route could not update. Please try again.'));
       };
     });
 }
@@ -631,24 +641,10 @@ $("#addStop").onclick = () => {
   renderTour();
   $("#stops .stop:last-child .date").focus();
 };
-$("#updateTour").onclick = async () => {
-  const used = tour().stops.filter((s) => s.date || s.venueId || s.text);
-  const bad = used.find((s) => dateKey(s.date) === null || !s.venueId);
-  if (bad) {
-    toast(
-      "Give each stop a valid dd/mm/yy date and select a venue from the suggestions.",
-    );
-    return;
-  }
-  const missing = used.find(
-    (s) => !hasLocation(state.venues.find((v) => v.id === s.venueId) || {}),
-  );
-  if (missing) {
-    toast(
-      "A selected venue needs coordinates. Locate it in the venue library first.",
-    );
-    return;
-  }
+async function updateTourMap() {
+  // Incomplete draft rows stay editable without holding up valid tour stops.
+  const used = tour().stops.filter(s => dateKey(s.date) !== null && s.venueId &&
+    hasLocation(state.venues.find(v => v.id === s.venueId) || {}));
   sortStops();
   tour().applied = structuredClone(
     used.sort((a, b) => dateKey(a.date) - dateKey(b.date)),
@@ -662,7 +658,7 @@ $("#updateTour").onclick = async () => {
   if (!used.length) toast("Tour map cleared.");
   else if (used.length === 1)
     toast("Tour updated. Add another stop to calculate a road journey.");
-};
+}
 $("#tourSelect").onchange = () => {
   state.current = $("#tourSelect").value;
   dirty = false;

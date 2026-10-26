@@ -1595,3 +1595,14 @@ input:focus,select:focus,textarea:focus{border-color:#ee8d75}
 dialog{border-radius:22px;background:#fffcf9;border-color:#f0d8ce;color:var(--ink)}.modal-head{background:linear-gradient(110deg,#ffe7e9,#ffe2c9);border-color:#f0d8ce}
 @media(min-width:721px){.map-panel{margin:12px 12px 12px 0;border-radius:22px;overflow:hidden}main{background:#fff8f3}aside{border-right:0}.workspace-section{margin:12px;border-radius:20px;border:1px solid #f3cfc1}.tour-section{border-top:0}}
 @media(max-width:720px){header{background:linear-gradient(115deg,#df3d72,#ed5556 48%,#f4b688);height:76px}.brand{font-size:27px}.header-right .primary{padding:12px 14px;border-radius:12px}.workspace-section{padding:24px}.map-style-control{padding:6px 8px}.map-style-control select{max-width:130px}.tour-section,.layers{padding:25px}}
+
+.workspace-label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.workspace-section #workspaceSelect{appearance:none;-webkit-appearance:none;background:linear-gradient(110deg,#f45455,#fc643d);color:#fff;border:0;border-radius:14px;min-height:48px;padding:13px 43px 13px 17px;margin-top:0;font-size:15px;font-weight:600;box-shadow:0 5px 16px #eb59451b;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"),linear-gradient(110deg,#f45455,#fc643d);background-repeat:no-repeat;background-position:right 16px center,center;background-size:18px,100%}
+.workspace-section #workspaceSelect option{background:#fffaf7;color:#512f33}
+.tour-stats{margin-top:18px}
+
+/* Sidebar sections retain their natural height and scroll as one column. */
+aside > section, aside > footer{flex-shrink:0}
+.workspace-section{flex:0 0 auto;min-height:min-content}
+.add-workspace{display:block;width:100%;min-height:44px;margin-top:13px;background:#fffaf5;border:1.5px solid #db8066;color:#a83d33;font-size:14px;font-weight:650;box-shadow:0 3px 10px #b24f3510}
+.add-workspace:hover{background:#fff0e5}
