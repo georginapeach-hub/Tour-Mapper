@@ -58,6 +58,10 @@ function cloudConnection(config) {
     const userChanged = cloudUser !== (session?.user?.id || null);
     if (userChanged) cloudRevision = null;
     cloudUser = session?.user?.id || null;
+    if (event === "PASSWORD_RECOVERY") {
+      setTimeout(() => showNewAccountPassword(), 0);
+      return;
+    }
     if (!session && typeof clearCompanySession === "function") clearCompanySession();
     if (
       session &&
@@ -92,7 +96,7 @@ async function showCloud() {
       <div class="form-actions"><button class="outline" id="loadCloud">Load from cloud</button><button class="primary" id="uploadCloud">Save to cloud</button></div><p class="micro">Export a backup before loading. Loading replaces this browser’s workspace after review. Saving updates the selected workspace’s cloud copy; a stale revision is rejected.</p>
       <div class="form-actions"><button class="outline" id="signOutCloud">Sign out</button></div>`
           : `
-      <label class="form-label" for="cloudEmail">Your email</label><input id="cloudEmail" type="email" autocomplete="email"><label class="form-label" for="cloudPassword">Password</label><input id="cloudPassword" type="password" autocomplete="current-password"><div class="form-actions"><button class="outline" id="signupCloud">Create account</button><button class="primary" id="signinCloud">Sign in</button></div><p class="micro">A new account may need email confirmation. The Supabase account used to manage the project is separate from this app account. Your password goes directly to your Supabase project and is never put in a backup.</p>`
+      <label class="form-label" for="cloudEmail">Your email</label><input id="cloudEmail" type="email" autocomplete="email"><label class="form-label" for="cloudPassword">Password</label><input id="cloudPassword" type="password" autocomplete="current-password"><div class="form-actions"><button class="outline" id="signupCloud">Create account</button><button class="primary" id="signinCloud">Sign in</button></div><button class="text-btn" id="forgotCloudPassword">Forgot password?</button><p class="micro">A new account may need email confirmation. The Supabase account used to manage the project is separate from this app account. Your password goes directly to your Supabase project and is never put in a backup.</p>`
     }
     <div id="cloudMessage" class="micro" role="status"></div>`,
   );
@@ -123,6 +127,7 @@ async function showCloud() {
     localStorage.setItem(cloudKey, JSON.stringify(c));
     await showCloud();
   });
+  if ($("#forgotCloudPassword")) $("#forgotCloudPassword").onclick = () => showForgotAccountPassword($("#cloudEmail").value.trim());
   busy("#signinCloud", async () => {
     const { data, error } = await cloudClient.auth.signInWithPassword({
       email: $("#cloudEmail").value.trim(),
@@ -443,4 +448,37 @@ function saveSelectedCloudPayload(payload,revision) {
     return cloudClient.rpc("save_tour_mapper_company",{company_id:companyContext.id,new_payload:payload,expected_revision:revision});
   }
   return cloudClient.rpc("save_tour_atlas_workspace",{new_payload:payload,expected_revision:revision});
+}
+
+// Only the account holder submits these forms; passwords never enter app backups.
+function showForgotAccountPassword(email = "") {
+  modal("Reset your Tour Mapper password", `<p>Enter the email you use to sign into Tour Mapper. A recovery link will let you choose a new app password.</p><label class="form-label" for="recoveryEmail">Tour Mapper email</label><input id="recoveryEmail" type="email" autocomplete="email" value="${esc(email)}"><div class="form-actions"><button class="outline" id="recoveryBack">Back to sign in</button><button class="primary" id="requestRecovery">Send password reset link</button></div><p id="recoveryMessage" class="micro" role="status"></p>`);
+  $("#recoveryBack").onclick = showCloud;
+  $("#requestRecovery").onclick = async () => {
+    const email = $("#recoveryEmail").value.trim();
+    const message = $("#recoveryMessage"), button = $("#requestRecovery");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {message.textContent="Enter your app account email.";return;}
+    button.disabled=true;
+    try {
+      const {error} = await cloudClient.auth.resetPasswordForEmail(email, {redirectTo: location.origin + location.pathname});
+      if(error)throw error;
+      message.textContent="If an account uses this email, a reset link will arrive shortly. Check your inbox and junk folder, then open the link in the same browser.";
+    } catch(error) {message.textContent=error.message || "The reset link could not be requested. Please try again.";button.disabled=false;}
+  };
+}
+function showNewAccountPassword() {
+  modal("Choose a new Tour Mapper password", `<p>Your recovery link has opened. Enter and confirm a new password below.</p><label class="form-label" for="newAccountPassword">New password</label><input id="newAccountPassword" type="password" autocomplete="new-password"><label class="form-label" for="confirmAccountPassword">Confirm new password</label><input id="confirmAccountPassword" type="password" autocomplete="new-password"><div class="form-actions"><button class="primary" id="saveAccountPassword">Save new password</button></div><p id="newPasswordMessage" class="micro" role="status"></p>`);
+  $("#saveAccountPassword").onclick = async () => {
+    const password=$("#newAccountPassword").value, message=$("#newPasswordMessage"), button=$("#saveAccountPassword");
+    if(password.length<8){message.textContent="Choose a password of at least 8 characters.";return;}
+    if(password!==$("#confirmAccountPassword").value){message.textContent="The two passwords do not match.";return;}
+    button.disabled=true;
+    try {
+      const {error}=await cloudClient.auth.updateUser({password});
+      if(error)throw error;
+      const {data}=await cloudClient.auth.getSession();
+      if(data.session)await autoLoadCloud(data.session);
+      await showCloud();toast("Your Tour Mapper password has been updated.");
+    } catch(error) {message.textContent=error.message || "Password update failed. Request a new recovery link and try again.";button.disabled=false;}
+  };
 }
