@@ -13,6 +13,7 @@
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     />
     <link rel="stylesheet" href="style.css?v=16" />
+    <link rel="stylesheet" href="tour-workflow.css?v=1" />
     <script
       defer
       src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -28,6 +29,7 @@
     <script defer src="tour-suggestions.js?v=15"></script>
     <script defer src="exports.js?v=15"></script>
     <script defer src="company-workspaces.js?v=15"></script>
+    <script defer src="tour-workflow.js?v=1"></script>
   </head>
   <body>
     <header>
@@ -79,6 +81,7 @@
           <div class="section-heading"><h2>Schedule</h2></div>
           <button class="outline suggestion-import" id="importSuggestions">↑ Import suggested Hit List</button>
           <div id="suggestionSummary" class="micro"></div>
+          <button class="outline" id="tourWorkflow">Tour workflow</button>
           <div class="tour-heading"><span>DATE</span><span>VENUE</span></div>
           <div id="stops"></div>
           <button class="add-stop" id="addStop">

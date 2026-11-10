@@ -223,7 +223,7 @@ function comparableWorkspace(workspace) {
   delete data.current;
   delete data.times;
   delete data.tourOn;
-  for (const t of data.tours || []) delete t.showSuggested;
+  for (const t of data.tours || []) { delete t.showSuggested; delete t.workflowMapOn; delete t.workflowFilter; }
   for (const category of data.categories || []) delete category.on;
   const canonical = (value) =>
     Array.isArray(value)
@@ -370,7 +370,7 @@ async function autoLoadCloud(session) {
           state.current = view.current;
         for (const t of state.tours) {
           const prior = view.tours.find(x => x.id === t.id);
-          if (prior) t.showSuggested = !!prior.showSuggested;
+          if (prior) { t.showSuggested = !!prior.showSuggested; t.workflowMapOn = !!prior.workflowMapOn; t.workflowFilter = prior.workflowFilter || "all"; }
         }
         state.times = view.times;
         state.tourOn = view.tourOn;

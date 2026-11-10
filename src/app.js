@@ -134,6 +134,7 @@ function toast(msg) {
   toastTimer = setTimeout(() => ($("#toast").style.display = "none"), 5500);
 }
 function modal(title, html) {
+  $("#modal").classList.toggle("workflow-modal", title.startsWith("Tour workflow"));
   $("#modal").classList.toggle("library-modal", title === "Your venue library");
   $("#modalTitle").textContent = title;
   $("#modalBody").innerHTML = html;
@@ -552,7 +553,7 @@ async function drawTour(showFeedback = false) {
     .map((s) => state.venues.find((v) => v.id === s.venueId))
     .filter(Boolean);
   venues.forEach((v, i) => {
-    if (hasLocation(v) && (!tour().showSuggested || typeof tourSuggestionFor !== "function" || tourSuggestionFor(v)))
+    if (hasLocation(v) && (!tour().workflowMapOn || typeof workflowVenueVisible !== "function" || workflowVenueVisible(v)) && (!tour().showSuggested || typeof tourSuggestionFor !== "function" || tourSuggestionFor(v)))
       L.marker([v.lat, v.lng], {
         icon: pin(
           typeof venueMarkerColour === "function" ? venueMarkerColour(v, "#008cff") : v.status === "permanently_closed" ? "#92969b" : "#008cff",
