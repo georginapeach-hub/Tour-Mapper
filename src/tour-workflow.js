@@ -27,11 +27,13 @@ function workflowDomain(value) {
   return domain&&!['gmail.com','outlook.com','hotmail.com','yahoo.co.uk','yahoo.com'].includes(domain)?domain:'';
 }
 function workflowMatch(row,venues=state.venues) {
+  if(row.venue_id){const byId=venues.find(v=>v.id===row.venue_id);if(byId)return byId;}
   const exact=matchSuggestedVenue(row,venues);if(exact)return exact;
   const key=workflowBaseName(row.name), tokens=workflowTokens(key);
   const domain=workflowDomain(row.email||row.contact_email), region=workflowName(row.area||row.region||row.town);
   const ranked=venues.map(v=>{
-    const aliases=[v.name,...(v.sourceRows||[]).map(r=>r.Venue||r.venue||r['Venue Name']||'')].filter(Boolean);
+    const aliases=[v.name,[v.name,v.town].filter(Boolean).join(' '),[v.town,v.name].filter(Boolean).join(' '),...(v.aliases||[]),...(v.sourceRows||[]).map(r=>r.Venue||r.venue||r['Venue Name']||'')].filter(Boolean);
+    const domainMatch=domain&&[v.email,v.website,...(v.contacts||[]).map(c=>c.email)].some(x=>workflowDomain(x)===domain);
     let score=0;
     for(const alias of aliases){
       const base=workflowBaseName(alias), vt=workflowTokens(base);
@@ -39,11 +41,12 @@ function workflowMatch(row,venues=state.venues) {
       const common=tokens.filter(x=>vt.includes(x));
       if(common.length>=2&&common.length===Math.min(tokens.length,vt.length))score=Math.max(score,70);
       if(common.length===1&&tokens.length===1&&vt.length<=2)score=Math.max(score,48);
+      if(common.length&&domainMatch&&common.length===Math.min(tokens.length,vt.length))score=Math.max(score,80);
     }
     const places=workflowName([v.town,v.region,v.address].filter(Boolean).join(' '));
     const areaMatch=region&&region.split(' ').filter(x=>x.length>3).some(x=>places.split(' ').includes(x));
     if(score&&areaMatch)score+=20;
-    if(domain&&[v.email,v.website,...(v.contacts||[]).map(c=>c.email)].some(x=>workflowDomain(x)===domain))score+=score?35:60;
+    if(domainMatch)score+=score?35:60;
     return {v,score};
   }).filter(x=>x.score>=70).sort((a,b)=>b.score-a.score);
   return ranked.length&&(!ranked[1]||ranked[0].score-ranked[1].score>=15)?ranked[0].v:null;
@@ -70,6 +73,7 @@ function parseWorkflowRows(text) {
     const dates=[dateOnlyDeal?r.deal:'',workflowDates(r.notes),workflowDates(r.follow_up_email_sent_notes)].filter(Boolean).join('\n');
     const notes=[r.notes, r.programmer_s_name&&!programmer?`Programmer / contact update: ${r.programmer_s_name}`:'',/^yes\s*[-–]/i.test(answer)?`Answer: ${answer}`:''].filter(Boolean).join('\n');
     return {_workflow:true,name:r.venue_name||'',area:r.area||'',email:r.e_mail||r.email||'',sourceRow:index+2,
+      venue_id:r.venue_id||'',latitude:r.latitude||'',longitude:r.longitude||'',town:r.town||'',postcode:r.postcode||'',location_source:r.location_source||'',website:r.website||'',create_venue:/^(yes|true|1)$/i.test(r.create_venue||''),location_type:r.location_type||'',address:r.address||'',
       status:/^yes\b/i.test(answer)?'yes':/^no\b/i.test(answer)?'no':'no_reply',
       workflow:{programmerName:programmer,contactEmail:r.e_mail||r.email||'',offeredDates:dates,deal:dateOnlyDeal?'':r.deal||'',notes,
         firstEmailSent:r.first_email_sent||'',followUpNotes:r.follow_up_email_sent_notes||'',originalAnswer:answer,sourceVenueName:r.venue_name||'',sourceRow:index+2,sourceFields:r}};
@@ -119,7 +123,7 @@ function workflowTableRows(t=tour(),query='') {
     .filter(({s,v})=>v&&[v.name,v.town,v.region,s.workflow.sourceVenueName,s.workflow.programmerName].join(' ').toLowerCase().includes(query.toLowerCase()));
 }
 function showTourWorkflow(){
-  const t=tour();modal(`Tour workflow · ${t.name}`,`<p>Replies and discussions for this tour. A Yes reply or an offered date does not add a confirmed schedule stop.</p><div class="workflow-tools"><select id="workflowTableFilter" aria-label="Filter workflow replies">${workflowFilterOptions(t)}</select><input id="workflowSearch" aria-label="Search workflow" placeholder="Search venue, area or programmer…"><button class="primary" id="workflowImport">Import contact list</button></div><p class="micro">Use the contact-list map layer to view these venues. Their existing locations are reused. Capacity filters may reduce the balloons shown.</p><div class="workflow-table-wrap"><table class="workflow-table"><thead><tr><th>Venue / area</th><th>Answer</th><th>Programmer / contact</th><th>Dates offered</th><th>Deal / discussion</th><th>Tour notes</th></tr></thead><tbody id="workflowTableRows"></tbody></table></div><p id="workflowTableCount" class="micro"></p><button class="outline" id="workflowShowMap">Show this selection on the map</button>`);
+  const t=tour(),entries=workflowEntries(t),located=entries.filter(s=>hasLocation(state.venues.find(v=>v.id===s.venueId)||{})).length,sourceCount=entries.reduce((n,s)=>n+(s.workflow.sourceEntries?.length||1),0);modal(`Tour workflow · ${t.name}`,`<p><strong>${sourceCount} contact rows · ${entries.length} venues · ${located} map locations</strong></p><p>Replies and discussions for this tour. A Yes reply or an offered date does not add a confirmed schedule stop.</p><div class="workflow-tools"><select id="workflowTableFilter" aria-label="Filter workflow replies">${workflowFilterOptions(t)}</select><input id="workflowSearch" aria-label="Search workflow" placeholder="Search venue, area or programmer…"><button class="primary" id="workflowImport">Import contact list</button></div><p class="micro">Use the contact-list map layer to view these venues. Their existing locations are reused. Capacity filters may reduce the balloons shown.</p><div class="workflow-table-wrap"><table class="workflow-table"><thead><tr><th>Venue / area</th><th>Answer</th><th>Programmer / contact</th><th>Dates offered</th><th>Deal / discussion</th><th>Tour notes</th></tr></thead><tbody id="workflowTableRows"></tbody></table></div><p id="workflowTableCount" class="micro"></p><button class="outline" id="workflowShowMap">Show this selection on the map</button>`);
   function rows(){
     const data=workflowTableRows(t,$('#workflowSearch').value);
     $('#workflowTableRows').innerHTML=data.map(({s,v})=>`<tr><td><button class="text-btn workflow-edit" data-venue="${esc(v.id)}">${esc(v.name)}</button><small>${esc(v.town||v.region||'')}</small>${s.workflow.sourceVenueName!==v.name?`<small>Listed as: ${esc(s.workflow.sourceVenueName)}</small>`:''}</td><td><span class="workflow-answer ${workflowResponse(s)}">${WORKFLOW_RESPONSES[workflowResponse(s)]}</span></td><td>${esc(s.workflow.programmerName||v.contactName||'unknown')}<small>${esc(s.workflow.contactEmail||v.email||'')}</small></td><td>${esc(s.workflow.offeredDates||'Not supplied')}</td><td>${esc(s.workflow.deal||'Not supplied')}</td><td>${esc(s.workflow.notes||'')}${s.workflow.followUpNotes?`<small>Follow-up: ${esc(s.workflow.followUpNotes)}</small>`:''}</td></tr>`).join('')||'<tr><td colspan="6">No venues match this view. Import your contact list to start.</td></tr>';
@@ -162,16 +166,44 @@ function updateWorkflowProgrammer(v,name,email){
   if(v.contactName)v.contactHistory.push({name:v.contactName,jobTitle:v.jobTitle||'',email:v.email||''});
   v.contactName=name;v.jobTitle='Programmer';if(email)v.email=email;
 }
+function workflowNewVenue(row){
+  if(!row.create_venue)return null;
+  const lat=Number(row.latitude),lng=Number(row.longitude);
+  const fixed=row.latitude!==''&&row.longitude!==''&&Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180;
+  if(!fixed&&row.location_type!=='no_fixed_venue')return null;
+  return {_workflowNew:true,id:uid(),name:row.name,town:row.town||'',region:row.area||'',address:row.address||row.postcode||'',lat:fixed?lat:null,lng:fixed?lng:null,
+    capacity:null,type:'theatre',categories:[],contactName:row.workflow.programmerName||'',jobTitle:row.workflow.programmerName?'Programmer':'',email:row.email||'',phone:'',notes:'',spaces:[],contacts:[],
+    status:row.location_type==='no_fixed_venue'?'no_fixed_venue':'unknown',website:typeof safeWebURL==='function'?safeWebURL(row.website):'',sources:row.location_source?[row.location_source]:[],
+    location:fixed?'Approximate postcode location from a published venue address':'No fixed performance venue',researchNote:row.location_source?'Location source: '+row.location_source:'',example:false};
+}
+function mergeWorkflowSelections(selections){
+  const groups=new Map();
+  for(const item of selections){const key=item.venue.id;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(item);}
+  return [...groups.values()].map(items=>{
+    if(items.length===1)return items[0];
+    const answered=[...new Set(items.map(x=>x.row.status).filter(x=>x!=='no_reply'))];
+    if(answered.length>1)throw Error('Different replies point to the same venue. Review those matches before importing.');
+    const row=structuredClone(items[0].row),entries=items.map(x=>structuredClone(x.row.workflow));
+    row.status=answered[0]||'no_reply';
+    for(const key of ['programmerName','contactEmail','offeredDates','deal','notes','firstEmailSent','followUpNotes','sourceVenueName'])row.workflow[key]=[...new Set(entries.map(w=>w[key]).filter(Boolean))].join('\n');
+    row.workflow.sourceEntries=entries;
+    return {row,venue:items[0].venue};
+  });
+}
 function applyWorkflowRows(t,selections){
   const result={added:0,updated:0,names:0};t.suggestions ||= [];
-  for(const {row,venue} of selections){
+  for(const {row,venue} of mergeWorkflowSelections(selections)){
+    if(venue?._workflowNew&&!state.venues.some(v=>v.id===venue.id)){const copy=structuredClone(venue);delete copy._workflowNew;state.venues.push(copy);}
     if(!venue||!state.venues.some(v=>v.id===venue.id))throw Error('Every included row must match an existing venue.');
+    const actual=state.venues.find(v=>v.id===venue.id);
+    if(!hasLocation(actual)&&row.latitude!==''&&row.longitude!==''){const lat=Number(row.latitude),lng=Number(row.longitude);if(Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180){actual.lat=lat;actual.lng=lng;actual.location='Approximate postcode location from a published venue address';if(row.location_source){actual.sources||=[];if(!actual.sources.includes(row.location_source))actual.sources.push(row.location_source);}}}
     let s=tourSuggestionFor(venue,t);
     if(!s){s={venueId:venue.id,status:row.status};t.suggestions.push(s);result.added++;}else result.updated++;
     // The uploaded list is the requested latest reply/contact update; blank answers mean no answer.
     if (!(row.status==='yes'&&['confirmed','pencilled'].includes(s.status))) s.status=row.status;
     s.workflow=structuredClone(row.workflow);
-    if(row.workflow.programmerName&&row.workflow.programmerName!==venue.contactName){updateWorkflowProgrammer(venue,row.workflow.programmerName,row.workflow.contactEmail);result.names++;}
+    actual.aliases ||= [];for(const alias of [row.name,...(s.workflow.sourceEntries||[]).map(w=>w.sourceVenueName)])if(alias&&alias!==actual.name&&!actual.aliases.includes(alias))actual.aliases.push(alias);
+    if(row.workflow.programmerName&&row.workflow.programmerName!==actual.contactName){updateWorkflowProgrammer(actual,row.workflow.programmerName,row.workflow.contactEmail);result.names++;}
   }
   t.workflowMapOn=true;t.workflowFilter='all';return result;
 }
@@ -182,9 +214,9 @@ function workflowImportProblem(message,code){
   box.textContent=message+' ('+code+')';box.focus();box.scrollIntoView({block:'nearest'});
 }
 function reviewWorkflowImport(rows,targetId){
-  const matches=rows.map(row=>({row,venue:workflowMatch(row)}));
-  const labels=new Map(state.venues.map(v=>[suggestionVenueLabel(v),v]));
-  $('#suggestionReview').innerHTML=`<h3>Review the tour contact list</h3><p>${rows.length} rows · ${matches.filter(x=>x.venue).length} matched automatically. Existing coordinates are reused. Unmatched or ambiguous names need a match before they can be included; no duplicate venue or guessed location will be created.</p><p>Answers update this tour: Yes means interested, No means declined, and blank means awaiting an answer. New programmer names update this workspace’s venue library. Offered dates are retained as offers.</p><datalist id="workflowVenueOptions">${[...labels.keys()].map(label=>`<option value="${esc(label)}"></option>`).join('')}</datalist><div class="suggestion-review-list">${matches.map(({row,venue},i)=>`<div class="workflow-match-row" data-workflow-row="${i}"><label><input type="checkbox" class="wfInclude" ${venue?'checked':''}> ${esc(row.name)} · ${esc(row.area)} · ${WORKFLOW_RESPONSES[workflowResponse({status:row.status})]}</label><input class="wfMatch" list="workflowVenueOptions" aria-label="Match ${esc(row.name)}" placeholder="Choose the existing venue" value="${esc(venue?suggestionVenueLabel(venue):'')}"><small>${row.workflow.programmerName?`New programmer: ${esc(row.workflow.programmerName)} · `:''}${venue?hasLocation(venue)?'Existing map location':'Matched venue has no saved coordinates':'Needs review — currently excluded'}</small></div>`).join('')}</div><button class="primary" id="applyWorkflowImport">Import selected tour information</button>`;
+  const matches=rows.map(row=>({row,venue:workflowMatch(row)||workflowNewVenue(row)}));
+  const labels=new Map([...state.venues,...matches.filter(x=>x.venue?._workflowNew).map(x=>x.venue)].map(v=>[suggestionVenueLabel(v),v]));
+  $('#suggestionReview').innerHTML=`<h3>Review the tour contact list</h3><p>${rows.length} rows · ${matches.filter(x=>x.venue).length} matched or located. Existing coordinates are reused; prepared new venue locations use published addresses. Unmatched or ambiguous names need a match before they can be included; no duplicate venue or guessed location will be created.</p><p>Answers update this tour: Yes means interested, No means declined, and blank means awaiting an answer. New programmer names update this workspace’s venue library. Offered dates are retained as offers.</p><datalist id="workflowVenueOptions">${[...labels.keys()].map(label=>`<option value="${esc(label)}"></option>`).join('')}</datalist><div class="suggestion-review-list">${matches.map(({row,venue},i)=>`<div class="workflow-match-row" data-workflow-row="${i}"><label><input type="checkbox" class="wfInclude" ${venue?'checked':''}> ${esc(row.name)} · ${esc(row.area)} · ${WORKFLOW_RESPONSES[workflowResponse({status:row.status})]}</label><input class="wfMatch" list="workflowVenueOptions" aria-label="Match ${esc(row.name)}" placeholder="Choose the existing venue" value="${esc(venue?suggestionVenueLabel(venue):'')}"><small>${row.workflow.programmerName?`New programmer: ${esc(row.workflow.programmerName)} · `:''}${venue?venue._workflowNew?hasLocation(venue)?'New venue — published address located':'New organisation — changing performance venues':hasLocation(venue)?'Existing map location':row.latitude!==''&&row.longitude!==''?'Location supplied from a published address':'Matched venue has no saved coordinates':'Needs review — currently excluded'}</small></div>`).join('')}</div><button class="primary" id="applyWorkflowImport">Import selected tour information</button>`;
   for(const e of document.querySelectorAll('.wfMatch'))e.onchange=()=>{if(labels.has(e.value))e.closest('[data-workflow-row]').querySelector('.wfInclude').checked=true;};
   $('#applyWorkflowImport').onclick=()=>{
     if(typeof workspaceCanEdit==='function'&&!workspaceCanEdit())return workflowImportProblem('Editing access is required.','WORKSPACE_READ_ONLY');
@@ -197,7 +229,7 @@ function reviewWorkflowImport(rows,targetId){
       selected.push({row:rows[Number(e.dataset.workflowRow)],venue});
     }
     if(!selected.length)return toast('Select at least one matched venue.');
-    const ids=selected.map(x=>x.venue.id);if(new Set(ids).size!==ids.length)return workflowImportProblem('Two rows map to the same venue. Review them before importing so one reply does not overwrite the other.','DUPLICATE_WORKFLOW_MATCH');
+    try{mergeWorkflowSelections(selected);}catch(e){return workflowImportProblem(e.message,'CONFLICTING_WORKFLOW_REPLIES');}
     const before=structuredClone(state);
     try{const result=applyWorkflowRows(t,selected);validateBackup(state);state.current=t.id;save();renderTour();renderLayers();renderVenues();drawTour();close();fit();showTourWorkflow();toast(`${result.added} added, ${result.updated} updated, ${result.names} programmer names updated. ${rows.length-selected.length} rows excluded for review.`);}
     catch(e){state=before;save();workflowImportProblem(e.message,'WORKFLOW_IMPORT_FAILED');}

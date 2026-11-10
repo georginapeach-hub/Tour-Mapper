@@ -26,3 +26,12 @@ if(process.argv[2]){
  const actual=context.parseWorkflowRows(fs.readFileSync(process.argv[2],'utf8'));
  console.log(JSON.stringify({rows:actual.length,yes:actual.filter(x=>x.status==='yes').length,no:actual.filter(x=>x.status==='no').length,awaiting:actual.filter(x=>x.status==='no_reply').length,programmerUpdates:actual.filter(x=>x.workflow.programmerName).length,datesSupplied:actual.filter(x=>x.workflow.offeredDates).length}));
 }
+context.uid=()=>require('node:crypto').randomUUID();
+const newRecord={...rows[2],name:'New venue',create_venue:true,latitude:'52',longitude:'-1',town:'Example town',location_source:'https://example.org/location'};
+const newVenue=context.workflowNewVenue(newRecord);assert(newVenue&&newVenue._workflowNew);
+const groupedTour={suggestions:[]};
+context.applyWorkflowRows(groupedTour,[{row:newRecord,venue:newVenue},{row:{...newRecord,workflow:{...newRecord.workflow,contactEmail:'second@example.org',sourceVenueName:'Another studio name'}},venue:newVenue}]);
+assert.equal(groupedTour.suggestions.length,1);assert.equal(groupedTour.suggestions[0].workflow.sourceEntries.length,2);assert(groupedTour.suggestions[0].workflow.contactEmail.includes('second@example.org'));assert(context.state.venues.find(v=>v.id===newVenue.id).aliases.includes('Another studio name'));
+const unfixed=context.workflowNewVenue({...newRecord,latitude:'',longitude:'',location_type:'no_fixed_venue'});assert.equal(unfixed.lat,null);assert.equal(unfixed.status,'no_fixed_venue');
+console.log('Passed new-located and changing-venue records, merged duplicate rows and retained aliases/contacts.');
+module.exports=context;
