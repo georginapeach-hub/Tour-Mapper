@@ -105,18 +105,41 @@ function matchSuggestedVenue(row, venues = state.venues) {
   if (row.town && candidates.length > 1) candidates = candidates.filter(v => normaliseSuggestionName(v.town || v.region) === normaliseSuggestionName(row.town));
   return candidates.length === 1 ? candidates[0] : null;
 }
+function suggestionImportProblem(message, code = 'IMPORT_REVIEW') {
+  let box = $('#suggestionImportError');
+  if (!box) {
+    $('#modalBody').insertAdjacentHTML('afterbegin', '<div id="suggestionImportError" class="help-box import-error" role="alert" tabindex="-1"></div>');
+    box = $('#suggestionImportError');
+  }
+  box.innerHTML = `<strong>Import needs attention</strong><p>${esc(message)}</p><small>Reference: ${esc(code)}. Your preview remains below so you can correct it and try again.</small>`;
+  box.focus(); box.scrollIntoView({block:'nearest'});
+}
+function suggestionImportResults(target, result, selections, storageSaved) {
+  const ids = new Set(selections.map(({row,venue}) => (venue || matchSuggestedVenue(row))?.id).filter(Boolean));
+  const unmapped = state.venues.filter(v => ids.has(v.id) && !hasLocation(v));
+  const mapped = ids.size - unmapped.length;
+  modal('Hit list import results', `<p>For <strong>${esc(target.name)}</strong></p>
+    <div class="help-box"><strong>${result.added} suggestions added</strong><p>${result.kept} selected rows were already on this tour; their saved status was kept.<br>${mapped} venues have coordinates and can appear on the map.</p></div>
+    ${unmapped.length ? `<div class="help-box"><strong>${unmapped.length} venues need a map location</strong><p>These venues were imported successfully, but a name or address alone does not place a balloon. Open the venue library to add coordinates or locate them using their postcode.</p><ul>${unmapped.map(v=>`<li>${esc(v.name)}${v.town ? ` — ${esc(v.town)}` : ''}</li>`).join('')}</ul></div>` : ''}
+    <p>${storageSaved ? 'Saved in this browser. Use Save to cloud in the workspace menu to share these changes across devices.' : '<strong>Browser saving failed.</strong> The imported venues are in this open session, but may be lost on reload. Export a backup now or save to cloud before closing.'}</p>
+    <p>This hit list does not add dated schedule stops. Capacity filters may hide venues; check Map layers if a located venue is missing.</p>
+    <div class="form-actions"><button class="outline" id="importResultLibrary">Open venue library</button><button class="primary" id="importResultDone">Done</button></div>`);
+  $('#importResultDone').onclick = close;
+  $('#importResultLibrary').onclick = () => { close(); $('#libraryBtn').click(); };
+}
 function suggestionImportModal() {
   const targetId = tour().id;
   modal("Import suggested venues", `<p>For <strong>${esc(tour().name)}</strong>. Choose a CSV, or paste one venue name per line. Existing venues are matched by name; review the matches before adding them. This does not add tour dates.</p><label class="form-label" for="suggestionFile">CSV file</label><input type="file" id="suggestionFile" accept=".csv,.txt,text/csv,text/plain"><label class="form-label" for="suggestionPaste">Or paste a venue list</label><textarea id="suggestionPaste" rows="6" placeholder="Venue name,City\nTraverse Theatre,Edinburgh"></textarea><p class="micro">Optional CSV columns: name, town, address, contact_name, job_title, email, phone, notes, latitude, longitude, capacity, website, tour_status. Statuses: suggested, no, no reply, pencilled, confirmed.</p><button class="primary" id="reviewSuggestions">Review list</button><div id="suggestionReview"></div>`);
   $("#suggestionFile").onchange = async e => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 5*1024*1024) return toast("Choose a file smaller than 5 MB.");
-    $("#suggestionPaste").value = await file.text();
+    if (file.size > 5*1024*1024) return suggestionImportProblem('Choose a file smaller than 5 MB.', 'FILE_TOO_LARGE');
+    try { $('#suggestionPaste').value = await file.text(); }
+    catch { suggestionImportProblem('The file could not be read. Try saving it as CSV and selecting it again.', 'FILE_READ_FAILED'); }
   };
   $("#reviewSuggestions").onclick = () => {
     try { reviewSuggestionRows(parseSuggestionList($("#suggestionPaste").value),targetId); }
-    catch(e) { toast(e.message); }
+    catch(e) { suggestionImportProblem(e.message, "FILE_FORMAT"); }
   };
 }
 function suggestionVenueLabel(v) {
@@ -125,24 +148,44 @@ function suggestionVenueLabel(v) {
   return duplicates.length > 1 ? `${label} (${duplicates.findIndex(x => x.id === v.id) + 1})` : label;
 }
 function reviewSuggestionRows(rows,targetId) {
-  if (!rows.length) return toast("No venue names found.");
+  if (!rows.length) return suggestionImportProblem("No venue names found. Use a name or venue_name column, or paste one venue name per line.", "NO_VENUES");
   const labels = new Map(state.venues.map(v => [suggestionVenueLabel(v),v]));
   $("#suggestionReview").innerHTML = `<h3>Review ${rows.length} venues</h3><p class="micro">Choose an existing venue where possible. Leave the match empty to create a new venue, or untick the row to skip it. New venues need coordinates before a balloon can appear; you can locate them in the venue editor.</p><datalist id="suggestionVenueOptions">${[...labels.keys()].map(label => `<option value="${esc(label)}"></option>`).join("")}</datalist><div class="suggestion-review-list">${rows.map((row,i) => { const match = matchSuggestedVenue(row); return `<div class="suggestion-review-row" data-row="${i}"><label><input type="checkbox" class="include-suggestion" checked> ${esc(row.name)}${row.town ? ` · ${esc(row.town)}` : ""}</label><input class="suggestion-match" aria-label="Match ${esc(row.name)}" list="suggestionVenueOptions" value="${esc(match ? suggestionVenueLabel(match) : "")}" placeholder="New venue — type to match an existing venue"><select class="import-status" aria-label="Status for ${esc(row.name)}">${Object.entries(TOUR_STATUSES).map(([key,s]) => `<option value="${key}" ${normaliseTourStatus(row.tour_status) === key ? "selected" : ""}>${s.label}</option>`).join("")}</select></div>`; }).join("")}</div><p class="micro">Reimporting a venue already suggested for this tour keeps its saved status. Contact details on existing venues are kept.</p><button class="primary" id="confirmSuggestions">Add selected suggestions</button>`;
   $("#confirmSuggestions").onclick = () => {
+    $('#suggestionImportError')?.remove();
+    if (typeof workspaceCanEdit === 'function' && !workspaceCanEdit()) return suggestionImportProblem('You have view-only access to this workspace. Ask its owner for editing access.', 'WORKSPACE_READ_ONLY');
     const target = state.tours.find(t => t.id === targetId);
-    if (!target) return toast("This tour no longer exists.");
+    if (!target) return suggestionImportProblem('This tour no longer exists. Close this window and select a tour before importing again.', 'TOUR_NOT_FOUND');
     const selections = [];
     for (const el of $("#suggestionReview").querySelectorAll('[data-row]')) {
       if (!el.querySelector('.include-suggestion').checked) continue;
       const label = el.querySelector('.suggestion-match').value.trim();
-      if (label && !labels.has(label)) return toast("Choose a listed venue match, or clear it to create a new venue.");
+      if (label && !labels.has(label)) return suggestionImportProblem(`The match for "${rows[Number(el.dataset.row)].name}" is not a listed venue. Choose a full name from the suggestions, or clear the match field to create a new venue.`, "INVALID_VENUE_MATCH");
       selections.push({row:rows[Number(el.dataset.row)],venue:labels.get(label),status:el.querySelector('select').value});
     }
-    if (!selections.length) return toast("Select at least one venue.");
-    const result = addTourSuggestions(target,selections);
+    if (!selections.length) return suggestionImportProblem("Tick at least one venue in the preview before importing.", "NO_ROWS_SELECTED");
+    let result;
+    const beforeVenues = structuredClone(state.venues), beforeTarget = structuredClone(target);
+    try {
+      result = addTourSuggestions(target,selections);
+    } catch (error) {
+      state.venues = beforeVenues;
+      Object.keys(target).forEach(key => delete target[key]); Object.assign(target, beforeTarget);
+      suggestionImportProblem(`No changes were applied. ${error.message || 'An unexpected error occurred while adding venues.'}`, 'IMPORT_FAILED');
+      return;
+    }
     target.showSuggested = true;
-    state.current = targetId; renderTour(); refreshSuggestions(); close(); fit();
-    toast(`${result.added} suggestions added. ${result.kept} already on this tour.${result.unmapped ? ` ${result.unmapped} new venues need a map location.` : ""}`);
+    state.current = targetId;
+    try {
+      renderTour(); refreshSuggestions(); fit();
+    } catch (error) {
+      save();
+      suggestionImportProblem(`The hit list was added, but the screen could not refresh. Do not reimport yet. ${error.message || 'Close this window and check the venue library.'}`, 'DISPLAY_REFRESH_FAILED');
+      return;
+    }
+    let storageSaved = false;
+    try { storageSaved = localStorage.getItem(KEY) === JSON.stringify(state); } catch {}
+    suggestionImportResults(target,result,selections,storageSaved);
   };
 }
 function addTourSuggestions(target,selections) {

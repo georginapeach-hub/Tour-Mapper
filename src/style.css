@@ -1679,3 +1679,5 @@ body .schedule-section #addStop span{font:inherit;vertical-align:baseline;margin
 
 .workspace-menu .workspace-copy-link{display:block;width:100%;margin-top:12px;min-height:44px}
 .workspace-menu .workspace-link-hint{margin:8px 0 12px;line-height:1.5}
+
+.import-error{border:2px solid #bc493c;background:#fff1e9;color:#71372f;margin-bottom:18px}.import-error p{margin:8px 0}.import-error:focus{outline:2px solid #f1a17a;outline-offset:3px}
