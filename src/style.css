@@ -1714,3 +1714,9 @@ body .schedule-section #addStop span{font:inherit;vertical-align:baseline;margin
 #storageLabel {font-size:14px;font-weight:600;}
 .footer-actions {display:flex;gap:16px;width:100%;padding-left:14px;}
 .aside-footer .footer-actions .text-btn {margin:0;font-size:14px;padding:4px 0;}
+
+.schedule-section .tour-heading,.schedule-section .stop {grid-template-columns:82px 33px minmax(0,1fr) 18px;gap:5px;}
+.schedule-section #stops .date {font-size:14px;padding-left:5px;padding-right:3px;}
+.schedule-section #stops .venue {font-size:14px;}
+.stop-weekday {font-size:12px;font-weight:600;color:#98516b;align-self:center;text-align:center;}
+.schedule-section .tour-heading {font-size:11px;letter-spacing:.3px;}

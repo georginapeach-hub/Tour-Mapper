@@ -157,6 +157,10 @@ function dateKey(s) {
     ? dt.getTime()
     : null;
 }
+function tourWeekday(date) {
+  const key = dateKey(date);
+  return key === null ? "" : ["Sun", "Mon", "Tues", "Weds", "Thurs", "Fri", "Sat"][new Date(key).getUTCDay()];
+}
 function sortStops() {
   tour().stops.sort(
     (a, b) => (dateKey(a.date) ?? Infinity) - (dateKey(b.date) ?? Infinity),
@@ -192,7 +196,7 @@ function renderTour() {
   $("#stops").innerHTML = t.stops
     .map((s, i) => {
       const v = state.venues.find((v) => v.id === s.venueId);
-      return `<div class="stop" data-id="${esc(s.id)}"><div class="stop-date"><span class="stop-number" aria-label="Balloon ${numberedStops.findIndex(x => x.id === s.id) + 1}">${numberedStops.some(x => x.id === s.id) ? numberedStops.findIndex(x => x.id === s.id) + 1 : ""}</span><input class="date" aria-label="Date for stop ${i + 1}" placeholder="dd/mm/yy" inputmode="numeric" maxlength="8" value="${esc(s.date)}"></div><div class="venue-field"><input class="venue" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-label="Venue for stop ${i + 1}" placeholder="Start typing a venue…" value="${esc(v?.name ?? s.text ?? "")}"><div class="suggestions" role="listbox"></div></div><button class="remove-stop" title="Remove stop ${i + 1}">×</button></div>`;
+      return `<div class="stop" data-id="${esc(s.id)}"><div class="stop-date"><span class="stop-number" aria-label="Balloon ${numberedStops.findIndex(x => x.id === s.id) + 1}">${numberedStops.some(x => x.id === s.id) ? numberedStops.findIndex(x => x.id === s.id) + 1 : ""}</span><input class="date" aria-label="Date for stop ${i + 1}" placeholder="dd/mm/yy" inputmode="numeric" maxlength="8" value="${esc(s.date)}"></div><span class="stop-weekday" aria-label="Day of week">${tourWeekday(s.date)}</span><div class="venue-field"><input class="venue" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-label="Venue for stop ${i + 1}" placeholder="Start typing a venue…" value="${esc(v?.name ?? s.text ?? "")}"><div class="suggestions" role="listbox"></div></div><button class="remove-stop" title="Remove stop ${i + 1}">×</button></div>`;
     })
     .join("");
   renderJourneyControls();
@@ -210,6 +214,7 @@ function renderTour() {
           (digits.length > 2 ? "/" + digits.slice(2, 4) : "") +
           (digits.length > 4 ? "/" + digits.slice(4) : "");
         s.date = di.value;
+        row.querySelector(".stop-weekday").textContent = tourWeekday(s.date);
         setDirty();
       };
       di.onkeydown = (event) => {
