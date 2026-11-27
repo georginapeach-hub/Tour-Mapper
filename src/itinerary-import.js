@@ -110,7 +110,72 @@ function applyItineraryRows(t,selected) {
   return {dated,pending};
 }
 const itineraryBaseRenderTour=renderTour;
-renderTour=function(){itineraryBaseRenderTour();if(!$('#importItinerary')){const b=document.createElement('button');b.id='importItinerary';b.className='outline';b.textContent='Import tour dates';$('#tourWorkflow').after(b);b.onclick=importItinerary;}$('#importItinerary').disabled=typeof workspaceCanEdit==='function'&&!workspaceCanEdit();};
+renderTour=function(){itineraryBaseRenderTour();if(!$('#importItinerary')){const b=document.createElement('button');b.id='importItinerary';b.className='outline';b.textContent='Import tour dates';$('#tourWorkflow').after(b);b.onclick=importItinerary;}$('#importItinerary').onclick=importItinerary;$('#importItinerary').disabled=typeof workspaceCanEdit==='function'&&!workspaceCanEdit();};
 const itineraryBaseWorkflowDetails=workflowDetails;
 workflowDetails=function(s){return itineraryBaseWorkflowDetails(s)+(s.workflow?.capacityInfo?`<p><strong>Space / capacity supplied for this tour:</strong><br>${esc(s.workflow.capacityInfo)}</p>`:'');};
+renderTour();
+// Guard every suggested-list entry point against booking tables.
+function looksLikeItinerary(text) {
+  const first=String(text||'').trim().split(/\r?\n/)[0]||'';
+  return /\bdate\b[\s,|\t]+(?:day\b[\s,|\t]+)?venue\b/i.test(first.replace(/\*\*/g,'')) || /^(?:\|\s*)?\d{1,2}\/\d{1,2}\/\d{2,4}(?:\s*\||\t|,)/.test(first);
+}
+const itineraryBaseParseSuggestions=parseSuggestionList;
+parseSuggestionList=function(text){
+  if(!looksLikeItinerary(text))return itineraryBaseParseSuggestions(text);
+  if(!/[\t|,]/.test(String(text).trim().split(/\r?\n/)[0]))throw Error('This looks like a booking table, but its columns were lost while pasting. Nothing has been imported. Copy the cells directly from your spreadsheet, upload a CSV, or paste a Markdown table using Import tour dates.');
+  return parseItinerary(text).map(row=>({...row,_itinerary:true}));
+};
+const itineraryBaseReviewSuggestions=reviewSuggestionRows;
+reviewSuggestionRows=function(rows,id){
+  if(rows.some(r=>r._itinerary)){
+    if(tour().id!==id)return suggestionImportProblem('The selected tour changed. Restart the import.','TOUR_CHANGED');
+    return reviewItinerary(rows);
+  }
+  return itineraryBaseReviewSuggestions(rows,id);
+};
+function mistakenBookingVenue(v){
+  if(!v||hasLocation(v)||v.address||v.email||v.phone||v.contactName)return false;
+  const name=String(v.name||'').replace(/\*\*/g,'').trim();
+  return /^date\s+day\s+venue\s+location\s+deal\s+status\s+notes\s+capacity$/i.test(name) ||
+    (/^(?:\d{1,2}\/\d{1,2}\/\d{2,4}|requested\b|mid\/?late\s+may\b|oct\/nov\b)/i.test(name)&&/\b(?:pencill?ed|confirmed)\b/i.test(name)&&name.length>65);
+}
+function mistakenBookingRows(t=tour()){
+  const ids=new Set((t.suggestions||[]).map(s=>s.venueId));
+  return state.venues.filter(v=>ids.has(v.id)&&mistakenBookingVenue(v));
+}
+function reviewMistakenBookings(){
+  const t=tour(),candidates=mistakenBookingRows(t);
+  if(!candidates.length)return toast('No mistaken booking-table records were found in this tour.');
+  modal('Review mistaken table records',`<p>These unlocated records look like whole booking rows imported as venue names. Real venue records are kept. A recovery copy is saved so you can undo this cleanup.</p>${candidates.map((v,i)=>`<label class="layer"><span>${esc(v.name)}</span><input type="checkbox" data-cleanup-row="${i}" checked></label>`).join('')}<p id="cleanupError" role="alert"></p><button class="primary" id="cleanMistakenBookings">Remove selected mistaken records</button>`);
+  $('#cleanMistakenBookings').onclick=()=>{
+    if(typeof workspaceCanEdit==='function'&&!workspaceCanEdit())return;
+    if(tour()!==t)return;
+    const selected=[...document.querySelectorAll('[data-cleanup-row]')].filter(el=>el.checked).map(el=>candidates[Number(el.dataset.cleanupRow)]),ids=new Set(selected.map(v=>v.id));
+    if(!ids.size){$('#cleanupError').textContent='Select at least one mistaken record.';return;}
+    t.bookingImportRecovery ||= [];
+    t.bookingImportRecovery.push({venues:structuredClone(selected),suggestions:structuredClone((t.suggestions||[]).filter(s=>ids.has(s.venueId)))});
+    t.suggestions=(t.suggestions||[]).filter(s=>!ids.has(s.venueId));
+    state.venues=state.venues.filter(v=>!ids.has(v.id)||state.tours.some(x=>[...(x.suggestions||[]),...x.stops,...x.applied].some(s=>s.venueId===v.id)));
+    save();renderTour();renderLayers();renderVenues();drawTour();close();toast('Mistaken records removed. Undo cleanup is available in Import tour dates.');
+  };
+}
+function undoMistakenBookings(){
+  if(typeof workspaceCanEdit==='function'&&!workspaceCanEdit())return;
+  const t=tour(),backup=t.bookingImportRecovery?.pop();if(!backup)return;
+  for(const v of backup.venues)if(!state.venues.some(x=>x.id===v.id))state.venues.push(v);
+  t.suggestions ||= [];for(const s of backup.suggestions)if(!t.suggestions.some(x=>x.venueId===s.venueId))t.suggestions.push(s);
+  save();renderTour();renderLayers();renderVenues();drawTour();close();toast('Cleanup undone.');
+}
+const itineraryBaseImport=importItinerary;
+importItinerary=function(){
+  itineraryBaseImport();
+  const bad=mistakenBookingRows(),recovery=tour().bookingImportRecovery?.length;
+  if(!bad.length&&!recovery)return;
+  const box=document.createElement('div');box.className='help-box import-error';
+  box.innerHTML=`${bad.length?`<p>${bad.length} records may have been imported as whole booking rows instead of venue names.</p><button class="outline" id="reviewBookingCleanup">Review mistaken records</button>`:''}${recovery?'<button class="outline" id="undoBookingCleanup">Undo cleanup</button>':''}`;
+  $('#modalBody').prepend(box);
+  if(bad.length)$('#reviewBookingCleanup').onclick=reviewMistakenBookings;
+  if(recovery)$('#undoBookingCleanup').onclick=undoMistakenBookings;
+};
+
 renderTour();

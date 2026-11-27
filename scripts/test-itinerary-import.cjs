@@ -1,6 +1,6 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const state={venues:[{id:'v1',name:'Test Venue',lat:51,lng:-1}],tourOn:false},tour={stops:[],applied:[],suggestions:[]};let n=0;
-const c=vm.createContext({state,structuredClone,uid:()=>String(++n),renderTour(){},workflowDetails(){},$:()=>({}),tour:()=>tour});
+const c=vm.createContext({state,structuredClone,uid:()=>String(++n),renderTour(){},workflowDetails(){},parseSuggestionList:()=>[],reviewSuggestionRows(){},$:()=>({}),tour:()=>tour});
 const app=fs.readFileSync('src/app.js','utf8');
 vm.runInContext(app.slice(app.indexOf('function dateKey('),app.indexOf('function sortStops(')),c);
 vm.runInContext(app.slice(app.indexOf('function parseCSV('),app.indexOf('function importModal(')),c);
@@ -22,3 +22,10 @@ assert(c.itineraryRowErrors(malformed[0],null,'31/02/27','').length>=4);
 assert.equal(c.itineraryRowErrors(rows[0],state.venues[0],'09/04/27','confirmed').length,0);
 assert(c.itineraryRowErrors(rows[0],{name:'Unlocated'},'09/04/27','confirmed').some(x=>x.includes('no map location')));
 console.log('Passed row errors: malformed and missing-name rows retained, all validation errors collected, valid rows accepted.');
+
+assert(c.looksLikeItinerary('Date Day Venue Location Deal Status Notes Capacity\n09/04/27 Friday Example City Pending Penciled Note 95'));
+assert.throws(()=>c.parseSuggestionList('Date Day Venue Location Deal Status Notes Capacity\n09/04/27 Friday Example City Pending Penciled Note 95'),/columns were lost/);
+assert(c.parseSuggestionList('Date,Day,Venue,Location,Deal,Status,Notes,Capacity\n09/04/27,Fri,Example,City,Pending,Penciled,Note,95')[0]._itinerary);
+assert(c.mistakenBookingVenue({name:'09/04/27 Friday Example Theatre Birmingham Pending Penciled Awaiting confirmation on the deal 95'}));
+assert(!c.mistakenBookingVenue({name:'Old Joint Stock Theatre'}));
+console.log('Passed wrong-importer guards and conservative mistaken-record detection.');
