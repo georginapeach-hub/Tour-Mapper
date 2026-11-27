@@ -16,3 +16,9 @@ c.applyItineraryRows(tour,selected);assert.equal(tour.stops.length,1);assert.equ
 c.applyItineraryRows(tour,selected);assert.equal(tour.stops.length,1);assert.equal(tour.suggestions.length,1);
 c.applyItineraryRows(tour,[{row:rows[1],venue:state.venues[0],date:'',status:'pencilled'}]);assert.equal(tour.stops.length,1);assert.equal(tour.suggestions[0].workflow.offeredDates,'Requested');
 console.log('Passed itinerary import: table/CSV parsing, statuses, uncertain and invalid dates, tour-only capacities, dated stops, undated workflow entries and repeat-import deduplication.');
+const malformed=c.parseItinerary('01/05/27,Sat,Test Venue\n02/05/27,Sun,,Town,Pending,Penciled,Note,80');
+assert.equal(malformed.length,2);assert(malformed[0].parseIssue);assert.equal(malformed[1].name,'');
+assert(c.itineraryRowErrors(malformed[0],null,'31/02/27','').length>=4);
+assert.equal(c.itineraryRowErrors(rows[0],state.venues[0],'09/04/27','confirmed').length,0);
+assert(c.itineraryRowErrors(rows[0],{name:'Unlocated'},'09/04/27','confirmed').some(x=>x.includes('no map location')));
+console.log('Passed row errors: malformed and missing-name rows retained, all validation errors collected, valid rows accepted.');

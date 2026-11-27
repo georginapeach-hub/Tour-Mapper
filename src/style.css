@@ -1726,3 +1726,5 @@ body .schedule-section #addStop span{font:inherit;vertical-align:baseline;margin
 #runVenueSearch {margin-top:14px;}
 
 .itinerary-review-row {padding:14px 0;border-bottom:1px solid var(--line);}.itinerary-review-row label {display:block;margin:8px 0;}.itinerary-review-row select,.itinerary-review-row input:not([type=checkbox]) {display:block;width:100%;margin-top:5px;}.itinerary-review-row input[type=checkbox]{width:auto;}.itinerary-warning {color:#9b1944;font-weight:600;}#importItinerary{margin-top:8px;width:100%;}
+
+.itinerary-row-errors{color:#9b1944;font-weight:600;}.itinerary-row-errors p{margin:6px 0;}.itinerary-has-error{border-left:3px solid #c84646;padding-left:10px;}.itinerary-review-row [aria-invalid=true]{border-color:#c84646;}#skipInvalidItinerary{margin-right:8px;}
