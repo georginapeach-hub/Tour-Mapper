@@ -182,6 +182,7 @@ function renderTour() {
       return `<div class="stop" data-id="${esc(s.id)}"><input class="date" aria-label="Date for stop ${i + 1}" placeholder="dd/mm/yy" inputmode="numeric" maxlength="8" value="${esc(s.date)}"><div class="venue-field"><input class="venue" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-label="Venue for stop ${i + 1}" placeholder="Start typing a venue…" value="${esc(v?.name ?? s.text ?? "")}"><div class="suggestions" role="listbox"></div></div><button class="remove-stop" title="Remove stop ${i + 1}">×</button></div>`;
     })
     .join("");
+  renderJourneyControls();
   $("#stops")
     .querySelectorAll(".stop")
     .forEach((row) => {
@@ -216,29 +217,7 @@ function renderTour() {
           sortStops();
           save();
           if (t.stops.map((x) => x.id).join() !== before) {
-            const active = document.activeElement;
-            const start = active?.selectionStart,
-              end = active?.selectionEnd;
-            const container = $("#stops");
-            const nodes = new Map(
-              [...container.children].map((n) => [n.dataset.id, n]),
-            );
-            t.stops.forEach((stop, index) => {
-              const n = nodes.get(stop.id);
-              container.appendChild(n);
-              n.querySelector(".date").setAttribute(
-                "aria-label",
-                "Date for stop " + (index + 1),
-              );
-              n.querySelector(".venue").setAttribute(
-                "aria-label",
-                "Venue for stop " + (index + 1),
-              );
-            });
-            if (active && container.contains(active)) {
-              active.focus();
-              if (start !== null) active.setSelectionRange(start, end);
-            }
+            renderTour();
             toast("Tour dates put in chronological order.");
           }
         }
@@ -325,6 +304,46 @@ function renderTour() {
         updateTourMap().catch(() => toast('The route could not update. Please try again.'));
       };
     });
+}
+function journeyKey(a, b) { return a.id + ":" + b.id; }
+function renderJourneyControls() {
+  const t = tour();
+  document.querySelectorAll(".journey-control").forEach(el => el.remove());
+  const stops = t.stops.filter(s => dateKey(s.date) !== null && s.venueId);
+  for (let i = 1; i < stops.length; i++) {
+    const a = stops[i - 1], b = stops[i], key = journeyKey(a, b);
+    const row = [...document.querySelectorAll("#stops .stop")].find(el => el.dataset.id === b.id);
+    if (!row) continue;
+    const label = document.createElement("label");
+    label.className = "journey-control";
+    const av = state.venues.find(v => v.id === a.venueId), bv = state.venues.find(v => v.id === b.venueId);
+    label.innerHTML = `<input type="checkbox" ${t.journeyRoutes?.[key] === false ? "" : "checked"}> Driving route <span>${esc(av?.name || "Venue")} to ${esc(bv?.name || "Venue")}</span>`;
+    label.querySelector("input").onchange = e => {
+      t.journeyRoutes ||= {};
+      t.journeyRoutes[key] = e.target.checked;
+      save();
+      drawTour();
+    };
+    row.before(label);
+  }
+}
+function tourStopInformation(stop) {
+  const t = tour(), info = t.stopInformation?.[stop.id] || {};
+  const box = document.createElement("div");
+  box.className = "tour-stop-information";
+  const editable = typeof workspaceCanEdit !== "function" || workspaceCanEdit();
+  box.innerHTML = `<hr><strong>This tour stop · ${esc(stop.date)}</strong><label>Tour stop notes<textarea aria-label="Tour stop notes" ${editable ? "" : "disabled"}></textarea></label><label>Balloon colour <input type="color" aria-label="Tour balloon colour" value="${/^#[0-9a-f]{6}$/i.test(info.colour || "") ? info.colour : "#008cff"}" ${editable ? "" : "disabled"}></label>${editable ? '<button type="button">Save tour stop</button>' : ""}`;
+  box.querySelector("textarea").value = info.notes || "";
+  if (editable) box.querySelector("button").onclick = () => {
+    if (typeof workspaceCanEdit === "function" && !workspaceCanEdit()) return;
+    t.stopInformation ||= {};
+    t.stopInformation[stop.id] = {notes: box.querySelector("textarea").value, colour: box.querySelector("input").value};
+    save();
+    map.closePopup();
+    drawTour();
+    toast("Tour stop saved. Save to cloud to share these changes.");
+  };
+  return box;
 }
 function hasLocation(v) {
   return (
@@ -544,7 +563,7 @@ async function drawTour(showFeedback = false) {
   routeLines.clearLayers();
   timeLabels.clearLayers();
   tourMarkers.clearLayers();
-  const stops = tour().applied || [];
+  const stops = (tour().applied || []).filter(s => state.venues.some(v => v.id === s.venueId));
   $("#stopCount").textContent = stops.length;
   $("#distance").textContent = "—";
   $("#duration").textContent = "—";
@@ -556,7 +575,7 @@ async function drawTour(showFeedback = false) {
     if (hasLocation(v) && (!tour().workflowMapOn || typeof workflowVenueVisible !== "function" || workflowVenueVisible(v)) && (!tour().showSuggested || typeof tourSuggestionFor !== "function" || tourSuggestionFor(v)))
       L.marker([v.lat, v.lng], {
         icon: pin(
-          typeof venueMarkerColour === "function" ? venueMarkerColour(v, "#008cff") : v.status === "permanently_closed" ? "#92969b" : "#008cff",
+          tour().stopInformation?.[stops[i].id]?.colour || (typeof venueMarkerColour === "function" ? venueMarkerColour(v, "#008cff") : v.status === "permanently_closed" ? "#92969b" : "#008cff"),
           i + 1,
         ),
         zIndexOffset: 1000,
@@ -566,7 +585,8 @@ async function drawTour(showFeedback = false) {
           const date = document.createElement("div");
           date.className = "popup-info";
           date.textContent = stops[i]?.date || "";
-          d.insertBefore(date, d.querySelector(".popup-edit"));
+          d.prepend(date);
+          d.appendChild(tourStopInformation(stops[i]));
           return d;
         })
         .addTo(tourMarkers);
@@ -579,6 +599,7 @@ async function drawTour(showFeedback = false) {
   $("#duration").textContent = "…";
   for (let i = 1; i < venues.length; i++) {
     if (epoch !== routeEpoch) return;
+    if (tour().journeyRoutes?.[journeyKey(stops[i - 1], stops[i])] === false) continue;
     const a = venues[i - 1],
       b = venues[i];
     if (!hasLocation(a) || !hasLocation(b)) {

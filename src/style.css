@@ -1681,3 +1681,10 @@ body .schedule-section #addStop span{font:inherit;vertical-align:baseline;margin
 .workspace-menu .workspace-link-hint{margin:8px 0 12px;line-height:1.5}
 
 .import-error{border:2px solid #bc493c;background:#fff1e9;color:#71372f;margin-bottom:18px}.import-error p{margin:8px 0}.import-error:focus{outline:2px solid #f1a17a;outline-offset:3px}
+
+.journey-control {display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 8px;font-size:14px;}
+.journey-control input {width:auto;}
+.journey-control span {display:block;width:100%;font-size:12px;color:#666;padding-left:24px;}
+.tour-stop-information label {display:block;margin-top:10px;}
+.tour-stop-information textarea {display:block;width:100%;min-height:85px;}
+.tour-stop-information input[type=color] {width:55px;height:34px;padding:2px;}
