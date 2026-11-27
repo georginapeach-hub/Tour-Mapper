@@ -597,7 +597,7 @@ async function drawTour(showFeedback = false) {
     .map((s) => state.venues.find((v) => v.id === s.venueId))
     .filter(Boolean);
   venues.forEach((v, i) => {
-    if (hasLocation(v) && (!tour().workflowMapOn || typeof workflowVenueVisible !== "function" || workflowVenueVisible(v)) && (!tour().showSuggested || typeof tourSuggestionFor !== "function" || tourSuggestionFor(v)))
+    if (hasLocation(v))
       L.marker([v.lat, v.lng], {
         icon: pin(
           tour().stopInformation?.[stops[i].id]?.colour || (typeof venueMarkerColour === "function" ? venueMarkerColour(v, "#008cff") : v.status === "permanently_closed" ? "#92969b" : "#008cff"),
