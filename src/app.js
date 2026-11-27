@@ -418,17 +418,8 @@ function belongs(v, c) {
   return (v.categories || []).includes(c.id);
 }
 function venueVisible(v) {
-  const sizes = state.categories.filter(
-    (c) => c.on && ["small", "medium", "large"].includes(c.rule),
-  );
-  const base = state.categories.filter(
-    (c) => c.on && !["small", "medium", "large"].includes(c.rule),
-  );
-  if (tour().showSuggested && typeof tourSuggestionFor === "function") return !!tourSuggestionFor(v) && (!sizes.length || sizes.some(c => belongs(v,c)));
-  return (
-    (sizes.length ? sizes.some((c) => belongs(v, c)) : true) &&
-    (base.length ? base.some((c) => belongs(v, c)) : sizes.length > 0)
-  );
+  return state.categories.some(c => c.on && belongs(v, c)) ||
+    (!!tour().showSuggested && typeof tourSuggestionFor === "function" && !!tourSuggestionFor(v));
 }
 
 function categoryMarkerColour(category) {
@@ -532,7 +523,7 @@ function renderLayers() {
 }
 function fit() {
   const pts = [];
-  if (state.tourOn && !tour().showSuggested)
+  if (state.tourOn)
     tour().applied.forEach((s) => {
       const v = state.venues.find((v) => v.id === s.venueId);
       if (v && hasLocation(v)) pts.push([v.lat, v.lng]);
@@ -1765,7 +1756,7 @@ $("#settingsBtn").onclick = () => {
 $("#helpBtn").onclick = () => {
   modal(
     "A few notes for the road",
-    `<h2>1. Build your venue library</h2><p>Import your CSV and match the columns. Names and addresses are retained even if a location cannot be found. UK postcodes provide approximate coordinates; edit a venue to enter its exact entrance coordinates. Record shops can use type “other” and their own category.</p><h2>2. Make a company tour</h2><p>Create a company tour, enter dates as dd/mm/yy (years 2000–2099), and type any consecutive part of a venue name. “wall” finds “The North Wall”. Select a suggestion, then add more rows with the plus button. Dates sort automatically when you leave the date box.</p><h2>3. Update the map</h2><p>Choose Update Tour to apply the schedule. Blue balloons are numbered by date. Dark red lines follow road routes when the routing service is available. Dashed lines mean a road route could not be found. Enable Driving times for bold white estimates along each journey.</p><h2>4. Control your layers</h2><p>Venue categories combine within their group. When any capacity filter is on, the map shows only venues with a matching space within the selected venue categories. Switch off All Theatres to see capacity layers alone. Each space is counted separately: under 100, or 100 and above. A venue can match several size groups. Unknown capacities only appear in the unfiltered view. The last matching enabled category supplies the marker colour. Suggested venues use the selected tour’s booking-status colours. Enable Suggested for this tour to show only its suggestions.</p><h2>5. Keep a backup</h2><p>Work saves in this browser. Clearing browser data removes it, so export a full backup regularly. New tours are separate from each other. Example venues are only a starting collection; this is not a complete UK theatre directory.</p>`,
+    `<h2>1. Build your venue library</h2><p>Import your CSV and match the columns. Names and addresses are retained even if a location cannot be found. UK postcodes provide approximate coordinates; edit a venue to enter its exact entrance coordinates. Record shops can use type “other” and their own category.</p><h2>2. Make a company tour</h2><p>Create a company tour, enter dates as dd/mm/yy (years 2000–2099), and type any consecutive part of a venue name. “wall” finds “The North Wall”. Select a suggestion, then add more rows with the plus button. Dates sort automatically when you leave the date box.</p><h2>3. Update the map</h2><p>Choose Update Tour to apply the schedule. Blue balloons are numbered by date. Dark red lines follow road routes when the routing service is available. Dashed lines mean a road route could not be found. Enable Driving times for bold white estimates along each journey.</p><h2>4. Control your layers</h2><p>Every enabled map layer adds its venues alongside the others. Turning on a capacity group never hides venues from another enabled layer. A venue remains visible while any of its layers is on. Switch off All Theatres and other broad layers to see smaller groups alone. Contact reply groups can be switched on independently. Current tour controls the numbered schedule balloons separately.</p><h2>5. Keep a backup</h2><p>Work saves in this browser. Clearing browser data removes it, so export a full backup regularly. New tours are separate from each other. Example venues are only a starting collection; this is not a complete UK theatre directory.</p>`,
   );
 };
 function init() {

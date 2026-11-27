@@ -93,25 +93,20 @@ function workflowFilterOptions(t=tour()) {
 const workflowBaseLayers=renderSuggestionLayer;
 renderSuggestionLayer=function(){
   workflowBaseLayers();const t=tour();if(!workflowEntries(t).length)return;
-  $('#layerList').insertAdjacentHTML('afterbegin',`<div class="workflow-map-layer"><label class="layer"><span class="dot" style="--dot:#168cff"></span><span>${esc(t.name)} · contact list <small>${workflowEntries(t).length}</small></span><input type="checkbox" id="workflowMapOn" aria-label="Show this tour’s contact list" ${t.workflowMapOn?'checked':''}></label><select id="workflowMapFilter" aria-label="Filter tour replies">${workflowFilterOptions(t)}</select></div>`);
+  const counts=workflowCounts(t);
+  $('#layerList').insertAdjacentHTML('afterbegin',`<div class="workflow-map-layer"><label class="layer"><span class="dot" style="--dot:#168cff"></span><span>${esc(t.name)} · contact list <small>${workflowEntries(t).length}</small></span><input type="checkbox" id="workflowMapOn" aria-label="Show this tour’s contact list" ${t.workflowMapOn?'checked':''}></label>${['yes','no','awaiting'].map(key=>`<label class="layer workflow-response-layer"><span>${WORKFLOW_RESPONSES[key]} <small>${counts[key]}</small></span><input type="checkbox" data-map-response="${key}" aria-label="Show contact venues: ${WORKFLOW_RESPONSES[key]}" ${t.workflowMapResponses?.[key] !== false ? 'checked' : ''}></label>`).join('')}</div>`);
   $('#workflowMapOn').onchange=e=>{t.workflowMapOn=e.target.checked;save();renderVenues();drawTour();};
-  $('#workflowMapFilter').onchange=e=>{t.workflowFilter=e.target.value;t.workflowMapOn=true;save();renderLayers();renderVenues();drawTour();fit();};
+  document.querySelectorAll('[data-map-response]').forEach(el=>el.onchange=()=>{t.workflowMapResponses ||= {};t.workflowMapResponses[el.dataset.mapResponse]=el.checked;if(el.checked)t.workflowMapOn=true;save();renderLayers();renderVenues();drawTour();});
 };
 function workflowVenueVisible(v) {
   const t=tour(),s=tourSuggestionFor(v,t);
-  if(!workflowMatchesResponse(s,t))return false;
-  const sizes=state.categories.filter(c=>c.on&&['small','large'].includes(c.rule));
-  return !sizes.length||sizes.some(c=>belongs(v,c));
+  return !!s?.workflow && t.workflowMapResponses?.[workflowResponse(s)] !== false;
 }
 const workflowBaseVisible=venueVisible;
-venueVisible=function(v){return tour().workflowMapOn?workflowVenueVisible(v):workflowBaseVisible(v);};
+venueVisible=function(v){return workflowBaseVisible(v) || (!!tour().workflowMapOn && workflowVenueVisible(v));};
 const workflowBaseFit=fit;
-fit=function(){
-  if(!tour().workflowMapOn)return workflowBaseFit();
-  const points=state.venues.filter(v=>hasLocation(v)&&workflowVenueVisible(v)).map(v=>[v.lat,v.lng]);
-  if(points.length)map.fitBounds(points,{paddingTopLeft:[45,140],paddingBottomRight:[45,100],maxZoom:11});
-  else map.setView([54.4,-3.1],6);
-};
+fit=function(){ return workflowBaseFit(); };
+
 function renderWorkflowSummary(){
   const t=tour(),c=workflowCounts(t);
   $('#tourWorkflow').textContent=c.all?`Tour workflow · ${c.all} venues`:'Tour workflow';
@@ -123,7 +118,7 @@ function workflowTableRows(t=tour(),query='') {
     .filter(({s,v})=>v&&[v.name,v.town,v.region,s.workflow.sourceVenueName,s.workflow.programmerName].join(' ').toLowerCase().includes(query.toLowerCase()));
 }
 function showTourWorkflow(){
-  const t=tour(),entries=workflowEntries(t),located=entries.filter(s=>hasLocation(state.venues.find(v=>v.id===s.venueId)||{})).length,sourceCount=entries.reduce((n,s)=>n+(s.workflow.sourceEntries?.length||1),0);modal(`Tour workflow · ${t.name}`,`<p><strong>${sourceCount} contact rows · ${entries.length} venues · ${located} map locations</strong></p><p>Replies and discussions for this tour. A Yes reply or an offered date does not add a confirmed schedule stop.</p><div class="workflow-tools"><select id="workflowTableFilter" aria-label="Filter workflow replies">${workflowFilterOptions(t)}</select><input id="workflowSearch" aria-label="Search workflow" placeholder="Search venue, area or programmer…"><button class="primary" id="workflowImport">Import contact list</button></div><p class="micro">Use the contact-list map layer to view these venues. Their existing locations are reused. Capacity filters may reduce the balloons shown.</p><div class="workflow-table-wrap"><table class="workflow-table"><thead><tr><th>Venue / area</th><th>Answer</th><th>Programmer / contact</th><th>Dates offered</th><th>Deal / discussion</th><th>Tour notes</th></tr></thead><tbody id="workflowTableRows"></tbody></table></div><p id="workflowTableCount" class="micro"></p><button class="outline" id="workflowShowMap">Show this selection on the map</button>`);
+  const t=tour(),entries=workflowEntries(t),located=entries.filter(s=>hasLocation(state.venues.find(v=>v.id===s.venueId)||{})).length,sourceCount=entries.reduce((n,s)=>n+(s.workflow.sourceEntries?.length||1),0);modal(`Tour workflow · ${t.name}`,`<p><strong>${sourceCount} contact rows · ${entries.length} venues · ${located} map locations</strong></p><p>Replies and discussions for this tour. A Yes reply or an offered date does not add a confirmed schedule stop.</p><div class="workflow-tools"><select id="workflowTableFilter" aria-label="Filter workflow replies">${workflowFilterOptions(t)}</select><input id="workflowSearch" aria-label="Search workflow" placeholder="Search venue, area or programmer…"><button class="primary" id="workflowImport">Import contact list</button></div><p class="micro">Use the contact-list map layer to view these venues. Their existing locations are reused. Each enabled map group adds its venues; turn other groups off to see only this list.</p><div class="workflow-table-wrap"><table class="workflow-table"><thead><tr><th>Venue / area</th><th>Answer</th><th>Programmer / contact</th><th>Dates offered</th><th>Deal / discussion</th><th>Tour notes</th></tr></thead><tbody id="workflowTableRows"></tbody></table></div><p id="workflowTableCount" class="micro"></p><button class="outline" id="workflowShowMap">Show this selection on the map</button>`);
   function rows(){
     const data=workflowTableRows(t,$('#workflowSearch').value);
     $('#workflowTableRows').innerHTML=data.map(({s,v})=>`<tr><td><button class="text-btn workflow-edit" data-venue="${esc(v.id)}">${esc(v.name)}</button><small>${esc(v.town||v.region||'')}</small>${s.workflow.sourceVenueName!==v.name?`<small>Listed as: ${esc(s.workflow.sourceVenueName)}</small>`:''}</td><td><span class="workflow-answer ${workflowResponse(s)}">${WORKFLOW_RESPONSES[workflowResponse(s)]}</span></td><td>${esc(s.workflow.programmerName||v.contactName||'unknown')}<small>${esc(s.workflow.contactEmail||v.email||'')}</small></td><td>${esc(s.workflow.offeredDates||'Not supplied')}</td><td>${esc(s.workflow.deal||'Not supplied')}</td><td>${esc(s.workflow.notes||'')}${s.workflow.followUpNotes?`<small>Follow-up: ${esc(s.workflow.followUpNotes)}</small>`:''}</td></tr>`).join('')||'<tr><td colspan="6">No venues match this view. Import your contact list to start.</td></tr>';
@@ -133,7 +128,7 @@ function showTourWorkflow(){
   $('#workflowTableFilter').onchange=e=>{t.workflowFilter=e.target.value;save();renderLayers();renderVenues();drawTour();rows();};
   $('#workflowSearch').oninput=rows;
   $('#workflowImport').onclick=suggestionImportModal;
-  $('#workflowShowMap').onclick=()=>{t.workflowMapOn=true;save();renderLayers();renderVenues();drawTour();close();fit();};rows();
+  $('#workflowShowMap').onclick=()=>{t.workflowMapResponses=Object.fromEntries(['yes','no','awaiting'].map(key=>[key,!t.workflowFilter||t.workflowFilter==='all'||t.workflowFilter===key]));t.workflowMapOn=true;save();renderLayers();renderVenues();drawTour();close();fit();};rows();
 }
 function workflowDetails(s){
   const w=s.workflow;
