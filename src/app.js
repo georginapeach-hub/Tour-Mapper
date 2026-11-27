@@ -196,7 +196,7 @@ function renderTour() {
   $("#stops").innerHTML = t.stops
     .map((s, i) => {
       const v = state.venues.find((v) => v.id === s.venueId);
-      return `<div class="stop" data-id="${esc(s.id)}"><div class="stop-date"><span class="stop-number" aria-label="Balloon ${numberedStops.findIndex(x => x.id === s.id) + 1}">${numberedStops.some(x => x.id === s.id) ? numberedStops.findIndex(x => x.id === s.id) + 1 : ""}</span><input class="date" aria-label="Date for stop ${i + 1}" placeholder="dd/mm/yy" inputmode="numeric" maxlength="8" value="${esc(s.date)}"></div><span class="stop-weekday" aria-label="Day of week">${tourWeekday(s.date)}</span><div class="venue-field"><input class="venue" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-label="Venue for stop ${i + 1}" placeholder="Start typing a venue…" value="${esc(v?.name ?? s.text ?? "")}"><div class="suggestions" role="listbox"></div></div><button class="remove-stop" title="Remove stop ${i + 1}">×</button></div>`;
+      return `<div class="stop" data-id="${esc(s.id)}"><div class="stop-date"><button type="button" class="stop-number" aria-label="Show balloon ${numberedStops.findIndex(x => x.id === s.id) + 1} on map" ${numberedStops.some(x => x.id === s.id) ? "" : "disabled"}>${numberedStops.some(x => x.id === s.id) ? numberedStops.findIndex(x => x.id === s.id) + 1 : ""}</button><input class="date" aria-label="Date for stop ${i + 1}" placeholder="dd/mm/yy" inputmode="numeric" maxlength="8" value="${esc(s.date)}"></div><span class="stop-weekday" aria-label="Day of week">${tourWeekday(s.date)}</span><div class="venue-field"><input class="venue" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-label="Venue for stop ${i + 1}" placeholder="Start typing a venue…" value="${esc(v?.name ?? s.text ?? "")}"><div class="suggestions" role="listbox"></div></div><span class="stop-route-slot"></span><button class="remove-stop" title="Remove stop ${i + 1}">×</button></div>`;
     })
     .join("");
   renderJourneyControls();
@@ -207,6 +207,14 @@ function renderTour() {
         di = row.querySelector(".date"),
         vi = row.querySelector(".venue"),
         list = row.querySelector(".suggestions");
+      row.querySelector(".stop-number").onclick = () => {
+        const v = state.venues.find(v => v.id === s.venueId);
+        if (!v || !hasLocation(v)) return toast("This venue needs a map location first.");
+        map.setView([v.lat, v.lng], 15);
+        const content = popup(v);
+        content.appendChild(tourStopInformation(s));
+        L.popup({maxHeight:360}).setLatLng([v.lat,v.lng]).setContent(content).openOn(map);
+      };
       di.oninput = () => {
         let digits = di.value.replace(/\D/g, "").slice(0, 6);
         di.value =
@@ -337,7 +345,7 @@ function renderJourneyControls() {
   const stops = t.stops.filter(s => dateKey(s.date) !== null && s.venueId);
   for (let i = 1; i < stops.length; i++) {
     const a = stops[i - 1], b = stops[i], key = journeyKey(a, b);
-    const row = [...document.querySelectorAll("#stops .stop")].find(el => el.dataset.id === b.id);
+    const row = [...document.querySelectorAll("#stops .stop")].find(el => el.dataset.id === a.id);
     if (!row) continue;
     const label = document.createElement("label");
     label.className = "journey-control";
@@ -349,7 +357,7 @@ function renderJourneyControls() {
       save();
       drawTour();
     };
-    row.before(label);
+    row.querySelector(".stop-route-slot").appendChild(label);
   }
 }
 function tourStopInformation(stop) {
