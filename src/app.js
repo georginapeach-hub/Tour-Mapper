@@ -167,8 +167,21 @@ function setDirty() {
   save();
 }
 let selectedTourId = null;
+const deletedTourStops = new WeakMap();
+const tourBalloonColours = [["Red", "#e53935"], ["Yellow", "#f2c230"], ["Purple", "#8e44ad"], ["Orange", "#f28c28"], ["Blue", "#008cff"], ["Green", "#43a047"]];
+$("#undoStop").onclick = () => {
+  if (typeof workspaceCanEdit === "function" && !workspaceCanEdit()) return;
+  const t = tour(), entry = deletedTourStops.get(t)?.pop();
+  if (!entry) return;
+  if (entry.placeholder) t.stops = t.stops.filter(s => s.id !== entry.placeholder || s.date || s.venueId || s.text);
+  t.stops.splice(Math.min(entry.index, t.stops.length), 0, entry.stop);
+  setDirty();
+  updateTourMap().catch(() => toast("The date was restored, but the map could not update."));
+};
 function renderTour() {
   const t = tour();
+  $("#undoStop").disabled = !deletedTourStops.get(t)?.length || (typeof workspaceCanEdit === "function" && !workspaceCanEdit());
+  const numberedStops = t.stops.filter(s => dateKey(s.date) !== null && s.venueId && hasLocation(state.venues.find(v => v.id === s.venueId) || {})).slice().sort((a,b) => dateKey(a.date)-dateKey(b.date));
   $("#tourSelect").innerHTML = '<option value="" disabled>Select Tour</option>' + state.tours
     .map((x) => `<option value="${esc(x.id)}">${esc(x.name)}</option>`)
     .join("");
@@ -179,7 +192,7 @@ function renderTour() {
   $("#stops").innerHTML = t.stops
     .map((s, i) => {
       const v = state.venues.find((v) => v.id === s.venueId);
-      return `<div class="stop" data-id="${esc(s.id)}"><input class="date" aria-label="Date for stop ${i + 1}" placeholder="dd/mm/yy" inputmode="numeric" maxlength="8" value="${esc(s.date)}"><div class="venue-field"><input class="venue" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-label="Venue for stop ${i + 1}" placeholder="Start typing a venue…" value="${esc(v?.name ?? s.text ?? "")}"><div class="suggestions" role="listbox"></div></div><button class="remove-stop" title="Remove stop ${i + 1}">×</button></div>`;
+      return `<div class="stop" data-id="${esc(s.id)}"><div class="stop-date"><span class="stop-number" aria-label="Balloon ${numberedStops.findIndex(x => x.id === s.id) + 1}">${numberedStops.some(x => x.id === s.id) ? numberedStops.findIndex(x => x.id === s.id) + 1 : ""}</span><input class="date" aria-label="Date for stop ${i + 1}" placeholder="dd/mm/yy" inputmode="numeric" maxlength="8" value="${esc(s.date)}"></div><div class="venue-field"><input class="venue" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-label="Venue for stop ${i + 1}" placeholder="Start typing a venue…" value="${esc(v?.name ?? s.text ?? "")}"><div class="suggestions" role="listbox"></div></div><button class="remove-stop" title="Remove stop ${i + 1}">×</button></div>`;
     })
     .join("");
   renderJourneyControls();
@@ -297,9 +310,16 @@ function renderTour() {
         }
       };
       row.querySelector(".remove-stop").onclick = () => {
+        if (typeof workspaceCanEdit === "function" && !workspaceCanEdit()) return;
+        const entry = {stop: structuredClone(s), index: t.stops.indexOf(s)};
+        const history = deletedTourStops.get(t) || [];
+        history.push(entry);
+        deletedTourStops.set(t, history);
         t.stops = t.stops.filter((x) => x.id !== s.id);
-        if (!t.stops.length)
-          t.stops = [{ id: uid(), date: "", venueId: "", text: "" }];
+        if (!t.stops.length) {
+          entry.placeholder = uid();
+          t.stops = [{ id: entry.placeholder, date: "", venueId: "", text: "" }];
+        }
         setDirty();
         updateTourMap().catch(() => toast('The route could not update. Please try again.'));
       };
@@ -332,12 +352,12 @@ function tourStopInformation(stop) {
   const box = document.createElement("div");
   box.className = "tour-stop-information";
   const editable = typeof workspaceCanEdit !== "function" || workspaceCanEdit();
-  box.innerHTML = `<hr><strong>This tour stop · ${esc(stop.date)}</strong><label>Tour stop notes<textarea aria-label="Tour stop notes" ${editable ? "" : "disabled"}></textarea></label><label>Balloon colour <input type="color" aria-label="Tour balloon colour" value="${/^#[0-9a-f]{6}$/i.test(info.colour || "") ? info.colour : "#008cff"}" ${editable ? "" : "disabled"}></label>${editable ? '<button type="button">Save tour stop</button>' : ""}`;
+  box.innerHTML = `<hr><strong>This tour stop · ${esc(stop.date)}</strong><label>Tour stop notes<textarea aria-label="Tour stop notes" ${editable ? "" : "disabled"}></textarea></label><label>Balloon colour <select aria-label="Tour balloon colour" ${editable ? "" : "disabled"}>${tourBalloonColours.map(([name, colour]) => `<option value="${colour}" ${info.colour === colour || (!info.colour && name === "Blue") ? "selected" : ""}>${name}</option>`).join("")}${info.colour && !tourBalloonColours.some(([,c]) => c === info.colour) ? `<option value="${esc(info.colour)}" selected>Current colour</option>` : ""}</select></label>${editable ? '<button type="button">Save tour stop</button>' : ""}`;
   box.querySelector("textarea").value = info.notes || "";
   if (editable) box.querySelector("button").onclick = () => {
     if (typeof workspaceCanEdit === "function" && !workspaceCanEdit()) return;
     t.stopInformation ||= {};
-    t.stopInformation[stop.id] = {notes: box.querySelector("textarea").value, colour: box.querySelector("input").value};
+    t.stopInformation[stop.id] = {notes: box.querySelector("textarea").value, colour: box.querySelector("select").value};
     save();
     map.closePopup();
     drawTour();

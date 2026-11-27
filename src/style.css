@@ -1703,3 +1703,9 @@ body .schedule-section #addStop span{font:inherit;vertical-align:baseline;margin
 .map-bottom {left:12px;right:auto;bottom:28px;padding:0;background:none;border:0;box-shadow:none;width:auto;}
 .map-bottom .map-button {font-size:12px;padding:7px 9px;}
 @media(max-width:720px){.map-top .map-controls{width:auto;}.map-utility{width:180px;}}
+
+.stop-date {position:relative;min-width:0;}
+.stop-number {position:absolute;right:calc(100% + 5px);top:14px;font-size:12px;font-weight:700;color:#98516b;}
+#undoStop {font-size:13px;white-space:nowrap;}
+#undoStop:disabled {opacity:.4;cursor:default;}
+.tour-stop-information select {display:block;width:100%;margin-top:5px;padding:8px;}
