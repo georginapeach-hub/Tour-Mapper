@@ -12,7 +12,7 @@
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     />
-    <link rel="stylesheet" href="style.css?v=19" />
+    <link rel="stylesheet" href="style.css?v=20" />
     <link rel="stylesheet" href="tour-workflow.css?v=1" />
     <script
       defer
@@ -123,30 +123,23 @@
       <div class="map-panel">
         <div id="map"></div>
         <div class="map-top">
-          <div class="map-title">
-            <span class="live-dot"></span> UNITED KINGDOM
-            <span class="map-separator">/</span>
-            <span id="mapVenueCount">0 venues</span>
-          </div>
           <div class="map-controls">
             <button class="map-button" id="fitMap">⌖ Fit map</button>
           </div>
         </div>
+        <div class="map-utility">
+          <div class="map-title"><span id="mapVenueCount">0 venues</span></div>
         <div class="map-search">
           <span>⌕</span
           ><input
             id="mapSearch"
-            placeholder="Find a venue in your library…"
+            placeholder="Find a venue…"
             aria-label="Find venue"
           />
           <div id="mapResults"></div>
         </div>
-        <div class="map-bottom">
-          <span
-            ><i class="legend-pin"></i> TOUR STOP
-            <i class="legend-line"></i> DRIVING ROUTE</span
-          ><button class="map-button" id="helpBtn">? Import guide</button>
         </div>
+        <div class="map-bottom"><button class="map-button" id="helpBtn">? Import guide</button></div>
       </div>
     </main>
     <div id="toast" role="status"></div>

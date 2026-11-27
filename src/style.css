@@ -1690,3 +1690,16 @@ body .schedule-section #addStop span{font:inherit;vertical-align:baseline;margin
 .tour-stop-information label {display:block;margin-top:10px;}
 .tour-stop-information textarea {display:block;width:100%;min-height:85px;}
 .tour-stop-information input[type=color] {width:55px;height:34px;padding:2px;}
+
+/* Compact map utilities leave the centre and venue popups clear. */
+.map-top {justify-content:flex-end;}
+.map-utility {position:absolute;z-index:450;right:12px;bottom:28px;width:210px;max-width:calc(100% - 24px);display:flex;flex-direction:column;align-items:flex-end;gap:5px;pointer-events:none;}
+.map-utility > * {pointer-events:auto;}
+.map-utility .map-title {display:flex;padding:5px 9px;font-size:12px;border-radius:8px;}
+.map-utility .map-search {position:relative;top:auto;left:auto;right:auto;width:100%;padding-left:8px;border-radius:9px;}
+.map-utility .map-search > span {font-size:18px;}
+.map-utility .map-search input {width:0;min-width:0;min-height:32px;padding:7px;font-size:14px;}
+.map-utility .map-search #mapResults {top:auto;bottom:calc(100% + 5px);max-height:min(280px,45vh);}
+.map-bottom {left:12px;right:auto;bottom:28px;padding:0;background:none;border:0;box-shadow:none;width:auto;}
+.map-bottom .map-button {font-size:12px;padding:7px 9px;}
+@media(max-width:720px){.map-top .map-controls{width:auto;}.map-utility{width:180px;}}
