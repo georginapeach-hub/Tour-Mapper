@@ -1744,3 +1744,7 @@ body .schedule-section #addStop span{font:inherit;vertical-align:baseline;margin
 .schedule-section #importItinerary {display:block;width:100%;margin:12px 0 20px;}
 .schedule-section #tourWorkflow,.schedule-section #importItinerary {min-height:42px;padding:10px 12px;line-height:1.35;}
 .schedule-section .tour-heading {margin-top:0;margin-bottom:10px;}
+
+/* Give weekdays breathing room; keep the two row actions compact. */
+.schedule-section .tour-heading,.schedule-section .stop {grid-template-columns:78px 49px minmax(0,1fr) 22px 22px;column-gap:4px;}
+.route-heading,.delete-heading {font-size:9px;}
