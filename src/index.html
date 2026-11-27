@@ -12,7 +12,7 @@
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     />
-    <link rel="stylesheet" href="style.css?v=21" />
+    <link rel="stylesheet" href="style.css?v=22" />
     <link rel="stylesheet" href="tour-workflow.css?v=1" />
     <script
       defer
@@ -116,8 +116,8 @@
         </section>
         <footer class="aside-footer">
           <span class="local-dot"></span
-          ><span id="storageLabel">Your workspace · saved on this browser</span
-          ><button class="text-btn" id="settingsBtn">Settings</button>
+          ><span id="storageLabel">Saved on this browser</span
+          ><div class="footer-actions"><button class="text-btn" id="settingsBtn">Settings</button><button class="text-btn" id="helpBtn">Import guide</button></div>
         </footer>
       </aside>
       <div class="map-panel">
@@ -139,7 +139,6 @@
           <div id="mapResults"></div>
         </div>
         </div>
-        <div class="map-bottom"><button class="map-button" id="helpBtn">? Import guide</button></div>
       </div>
     </main>
     <div id="toast" role="status"></div>

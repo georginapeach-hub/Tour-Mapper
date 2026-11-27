@@ -1709,3 +1709,8 @@ body .schedule-section #addStop span{font:inherit;vertical-align:baseline;margin
 #undoStop {font-size:13px;white-space:nowrap;}
 #undoStop:disabled {opacity:.4;cursor:default;}
 .tour-stop-information select {display:block;width:100%;margin-top:5px;padding:8px;}
+
+.aside-footer {flex-wrap:wrap;gap:8px;font-size:14px;}
+#storageLabel {font-size:14px;font-weight:600;}
+.footer-actions {display:flex;gap:16px;width:100%;padding-left:14px;}
+.aside-footer .footer-actions .text-btn {margin:0;font-size:14px;padding:4px 0;}
