@@ -1,0 +1,14 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+let next=0;const state={venues:[]};const context=vm.createContext({URL,URLSearchParams,state,uid:()=>String(++next),importModal:()=>{},$:()=>({}),console});
+vm.runInContext(fs.readFileSync('src/venue-finder.js','utf8'),context);
+assert.equal(vm.runInContext("finderWebsite('javascript:alert(1)')",context),'');
+assert.equal(vm.runInContext("finderWebsite('https://user:pass@example.com')",context),'');
+assert.equal(vm.runInContext("finderWebsite('venue.co.uk/contact?secret=1')",context),'https://venue.co.uk/contact');
+context.feature={properties:{name:'Example Venue',city:'Leeds',countrycode:'GB',osm_type:'N',osm_id:123},geometry:{type:'Point',coordinates:[-1.5,53.8]}};
+const candidate=vm.runInContext("finderCandidate(feature,'')",context);
+assert.equal(candidate.lat,53.8);assert.equal(candidate.lng,-1.5);assert.equal(candidate.capacity,null);assert.equal(candidate.town,'Leeds');
+state.venues.push({...candidate});context.candidate=candidate;
+assert.equal(vm.runInContext('finderDuplicates(candidate).length',context),1);
+context.feature.properties.countrycode='DE';assert.equal(vm.runInContext("finderCandidate(feature,'')",context),null);
+context.feature.properties.countrycode='GB';context.feature.geometry.coordinates[0]=NaN;assert.equal(vm.runInContext("finderCandidate(feature,'')",context),null);
+console.log('Passed venue finder: safe website URLs, coordinate conversion, missing data, UK results and duplicate checks.');

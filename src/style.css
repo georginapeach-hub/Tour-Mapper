@@ -1720,3 +1720,7 @@ body .schedule-section #addStop span{font:inherit;vertical-align:baseline;margin
 .schedule-section #stops .venue {font-size:14px;}
 .stop-weekday {font-size:12px;font-weight:600;color:#98516b;align-self:center;text-align:center;}
 .schedule-section .tour-heading {font-size:11px;letter-spacing:.3px;}
+
+.finder-result {display:block;width:100%;text-align:left;padding:12px;margin:8px 0;border:1px solid var(--line);border-radius:8px;background:white;}
+.finder-result span,.finder-result small {display:block;margin-top:5px;}
+#runVenueSearch {margin-top:14px;}
