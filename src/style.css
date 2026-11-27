@@ -1738,3 +1738,9 @@ body .schedule-section #addStop span{font:inherit;vertical-align:baseline;margin
 .stop-number {background:none;border:0;border-radius:4px;padding:3px 1px;top:11px;min-width:18px;cursor:pointer;}
 .stop-number:hover,.stop-number:focus-visible {background:#fff4ef;color:#a11d49;outline:1px solid currentColor;}
 .stop-number:disabled {visibility:hidden;}
+
+/* Keep schedule actions evenly spaced and separate from the date grid. */
+.schedule-section #tourWorkflow {display:block;width:100%;margin:16px 0 0;}
+.schedule-section #importItinerary {display:block;width:100%;margin:12px 0 20px;}
+.schedule-section #tourWorkflow,.schedule-section #importItinerary {min-height:42px;padding:10px 12px;line-height:1.35;}
+.schedule-section .tour-heading {margin-top:0;margin-bottom:10px;}
