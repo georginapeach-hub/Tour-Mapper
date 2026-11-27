@@ -1724,3 +1724,5 @@ body .schedule-section #addStop span{font:inherit;vertical-align:baseline;margin
 .finder-result {display:block;width:100%;text-align:left;padding:12px;margin:8px 0;border:1px solid var(--line);border-radius:8px;background:white;}
 .finder-result span,.finder-result small {display:block;margin-top:5px;}
 #runVenueSearch {margin-top:14px;}
+
+.itinerary-review-row {padding:14px 0;border-bottom:1px solid var(--line);}.itinerary-review-row label {display:block;margin:8px 0;}.itinerary-review-row select,.itinerary-review-row input:not([type=checkbox]) {display:block;width:100%;margin-top:5px;}.itinerary-review-row input[type=checkbox]{width:auto;}.itinerary-warning {color:#9b1944;font-weight:600;}#importItinerary{margin-top:8px;width:100%;}

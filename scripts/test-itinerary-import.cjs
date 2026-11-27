@@ -1,0 +1,18 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const state={venues:[{id:'v1',name:'Test Venue',lat:51,lng:-1}],tourOn:false},tour={stops:[],applied:[],suggestions:[]};let n=0;
+const c=vm.createContext({state,structuredClone,uid:()=>String(++n),renderTour(){},workflowDetails(){},$:()=>({}),tour:()=>tour});
+const app=fs.readFileSync('src/app.js','utf8');
+vm.runInContext(app.slice(app.indexOf('function dateKey('),app.indexOf('function sortStops(')),c);
+vm.runInContext(app.slice(app.indexOf('function parseCSV('),app.indexOf('function importModal(')),c);
+c.hasLocation=v=>Number.isFinite(v.lat)&&Number.isFinite(v.lng);
+vm.runInContext(fs.readFileSync('src/itinerary-import.js','utf8'),c);
+assert.equal(c.itineraryDate('9/4/2027'),'09/04/27');
+for(const value of ['Requested','24/05/27 or 27 or 28','21/05/27 - requested June','31/02/27','01/01/1927'])assert.equal(c.itineraryDate(value),'');
+const rows=c.parseItinerary('| 09/04/27 | Friday | Test Venue | Test City | 70/30 | Penciled | **Send memo** | Studio - 95 |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| Requested | - | Other Venue | City | Pending | Confirmed | Awaiting dates | - |');
+assert.equal(rows.length,2);assert.equal(rows[0].notes,'Send memo');assert.equal(rows[0].status,'pencilled');assert.equal(rows[1].date,'');
+const csv=c.parseItinerary('Date,Venue,Town,Deal,Status,Notes,Capacity\n03/06/27,Test Venue,City,70/30,Confirmed,Send form,90');assert.equal(csv[0].status,'confirmed');
+const selected=[{row:rows[0],venue:state.venues[0],date:rows[0].date,status:rows[0].status}];
+c.applyItineraryRows(tour,selected);assert.equal(tour.stops.length,1);assert.equal(tour.applied.length,1);assert.equal(tour.stopInformation[tour.stops[0].id].capacityInfo,'Studio - 95');assert.equal(state.venues[0].capacity,undefined);
+c.applyItineraryRows(tour,selected);assert.equal(tour.stops.length,1);assert.equal(tour.suggestions.length,1);
+c.applyItineraryRows(tour,[{row:rows[1],venue:state.venues[0],date:'',status:'pencilled'}]);assert.equal(tour.stops.length,1);assert.equal(tour.suggestions[0].workflow.offeredDates,'Requested');
+console.log('Passed itinerary import: table/CSV parsing, statuses, uncertain and invalid dates, tour-only capacities, dated stops, undated workflow entries and repeat-import deduplication.');

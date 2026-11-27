@@ -357,12 +357,12 @@ function tourStopInformation(stop) {
   const box = document.createElement("div");
   box.className = "tour-stop-information";
   const editable = typeof workspaceCanEdit !== "function" || workspaceCanEdit();
-  box.innerHTML = `<hr><strong>This tour stop · ${esc(stop.date)}</strong><label>Tour stop notes<textarea aria-label="Tour stop notes" ${editable ? "" : "disabled"}></textarea></label><label>Balloon colour <select aria-label="Tour balloon colour" ${editable ? "" : "disabled"}>${tourBalloonColours.map(([name, colour]) => `<option value="${colour}" ${info.colour === colour || (!info.colour && name === "Blue") ? "selected" : ""}>${name}</option>`).join("")}${info.colour && !tourBalloonColours.some(([,c]) => c === info.colour) ? `<option value="${esc(info.colour)}" selected>Current colour</option>` : ""}</select></label>${editable ? '<button type="button">Save tour stop</button>' : ""}`;
+  box.innerHTML = `<hr><strong>This tour stop · ${esc(stop.date)}</strong>${info.bookingStatus ? `<p><strong>Booking:</strong> ${esc(typeof TOUR_STATUSES !== "undefined" ? TOUR_STATUSES[info.bookingStatus]?.label || info.bookingStatus : info.bookingStatus)}</p>` : ""}${info.deal ? `<p><strong>Deal:</strong> ${esc(info.deal)}</p>` : ""}${info.capacityInfo ? `<p><strong>Space / capacity supplied:</strong> ${esc(info.capacityInfo)}</p>` : ""}<label>Tour stop notes<textarea aria-label="Tour stop notes" ${editable ? "" : "disabled"}></textarea></label><label>Balloon colour <select aria-label="Tour balloon colour" ${editable ? "" : "disabled"}>${tourBalloonColours.map(([name, colour]) => `<option value="${colour}" ${info.colour === colour || (!info.colour && name === "Blue") ? "selected" : ""}>${name}</option>`).join("")}${info.colour && !tourBalloonColours.some(([,c]) => c === info.colour) ? `<option value="${esc(info.colour)}" selected>Current colour</option>` : ""}</select></label>${editable ? '<button type="button">Save tour stop</button>' : ""}`;
   box.querySelector("textarea").value = info.notes || "";
   if (editable) box.querySelector("button").onclick = () => {
     if (typeof workspaceCanEdit === "function" && !workspaceCanEdit()) return;
     t.stopInformation ||= {};
-    t.stopInformation[stop.id] = {notes: box.querySelector("textarea").value, colour: box.querySelector("select").value};
+    t.stopInformation[stop.id] = {...info, notes: box.querySelector("textarea").value, colour: box.querySelector("select").value};
     save();
     map.closePopup();
     drawTour();
