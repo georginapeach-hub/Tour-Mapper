@@ -317,7 +317,7 @@ function renderJourneyControls() {
     const label = document.createElement("label");
     label.className = "journey-control";
     const av = state.venues.find(v => v.id === a.venueId), bv = state.venues.find(v => v.id === b.venueId);
-    label.innerHTML = `<input type="checkbox" ${t.journeyRoutes?.[key] === false ? "" : "checked"}> Driving route <span>${esc(av?.name || "Venue")} to ${esc(bv?.name || "Venue")}</span>`;
+    label.innerHTML = `<input type="checkbox" aria-label="${esc("Driving route from " + (av?.name || "venue") + " to " + (bv?.name || "venue"))}" title="${esc("Driving route from " + (av?.name || "venue") + " to " + (bv?.name || "venue"))}" ${t.journeyRoutes?.[key] === false ? "" : "checked"}>`;
     label.querySelector("input").onchange = e => {
       t.journeyRoutes ||= {};
       t.journeyRoutes[key] = e.target.checked;

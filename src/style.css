@@ -1682,9 +1682,11 @@ body .schedule-section #addStop span{font:inherit;vertical-align:baseline;margin
 
 .import-error{border:2px solid #bc493c;background:#fff1e9;color:#71372f;margin-bottom:18px}.import-error p{margin:8px 0}.import-error:focus{outline:2px solid #f1a17a;outline-offset:3px}
 
-.journey-control {display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 8px;font-size:14px;}
-.journey-control input {width:auto;}
-.journey-control span {display:block;width:100%;font-size:12px;color:#666;padding-left:24px;}
+.schedule-section .tour-heading {grid-template-columns:91px 1fr 18px;gap:8px;}
+.route-heading {justify-self:end;font-size:10px;letter-spacing:0;}
+.journey-control {display:block;position:relative;height:0;margin:0;padding:0;}
+.schedule-section #stops .journey-control input {position:absolute;right:1px;top:-13px;width:16px;height:16px;min-height:0;margin:0;padding:0;cursor:pointer;}
+@media(max-width:720px){.schedule-section .tour-heading{grid-template-columns:100px 1fr 20px;}}
 .tour-stop-information label {display:block;margin-top:10px;}
 .tour-stop-information textarea {display:block;width:100%;min-height:85px;}
 .tour-stop-information input[type=color] {width:55px;height:34px;padding:2px;}
