@@ -29,6 +29,9 @@ jobs:
       - uses: actions/upload-pages-artifact@v4
         with:
           path: dist
+      # Allow the uploaded package to appear in the Actions artifact listing.
+      - name: Wait for Pages artifact availability
+        run: sleep 15
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
