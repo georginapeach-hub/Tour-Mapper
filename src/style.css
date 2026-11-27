@@ -1753,3 +1753,6 @@ body .schedule-section #addStop span{font:inherit;vertical-align:baseline;margin
 .schedule-section .tour-heading,.schedule-section #stops {width:calc(100% + 10px);}
 .schedule-section .tour-heading,.schedule-section .stop {grid-template-columns:78px 49px minmax(0,1fr) 28px 20px;column-gap:4px;}
 .route-heading,.delete-heading {white-space:nowrap;justify-self:center;font-size:9px;}
+
+#stops .stop.tour-date-gap {margin-top:12px;padding-top:12px;}
+#stops .stop.tour-date-gap::before {content:"";position:absolute;top:0;left:0;right:0;border-top:1px solid #c78a9366;}

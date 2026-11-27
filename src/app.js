@@ -200,6 +200,7 @@ function renderTour() {
     })
     .join("");
   renderJourneyControls();
+  renderTourDateDividers();
   $("#stops")
     .querySelectorAll(".stop")
     .forEach((row) => {
@@ -223,6 +224,7 @@ function renderTour() {
           (digits.length > 4 ? "/" + digits.slice(4) : "");
         s.date = di.value;
         row.querySelector(".stop-weekday").textContent = tourWeekday(s.date);
+        renderTourDateDividers();
         setDirty();
       };
       di.onkeydown = (event) => {
@@ -337,6 +339,16 @@ function renderTour() {
         updateTourMap().catch(() => toast('The route could not update. Please try again.'));
       };
     });
+}
+function renderTourDateDividers() {
+  document.querySelectorAll("#stops .stop").forEach(el => el.classList.remove("tour-date-gap"));
+  const dated = tour().stops.filter(s => dateKey(s.date) !== null).slice().sort((a,b) => dateKey(a.date)-dateKey(b.date));
+  for (let i=1;i<dated.length;i++) {
+    if (dateKey(dated[i].date)-dateKey(dated[i-1].date) > 7*86400000) {
+      const row = [...document.querySelectorAll("#stops .stop")].find(el => el.dataset.id === dated[i].id);
+      row?.classList.add("tour-date-gap");
+    }
+  }
 }
 function journeyKey(a, b) { return a.id + ":" + b.id; }
 function renderJourneyControls() {
