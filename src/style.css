@@ -1748,3 +1748,8 @@ body .schedule-section #addStop span{font:inherit;vertical-align:baseline;margin
 /* Give weekdays breathing room; keep the two row actions compact. */
 .schedule-section .tour-heading,.schedule-section .stop {grid-template-columns:78px 49px minmax(0,1fr) 22px 22px;column-gap:4px;}
 .route-heading,.delete-heading {font-size:9px;}
+
+/* Extend the schedule into the right inset, giving the venue field the space. */
+.schedule-section .tour-heading,.schedule-section #stops {width:calc(100% + 10px);}
+.schedule-section .tour-heading,.schedule-section .stop {grid-template-columns:78px 49px minmax(0,1fr) 28px 20px;column-gap:4px;}
+.route-heading,.delete-heading {white-space:nowrap;justify-self:center;font-size:9px;}
